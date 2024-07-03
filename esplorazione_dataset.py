@@ -2,15 +2,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from scipy import stats
 
-df = pd.read_csv(r'OnlineNewsPopularity.csv')
+df = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\OnlineNewsPopularity.csv')
+df_brutta = df.copy()
 
 print(df.shape) # 39644 righe x 61 colonne
 
 pd.set_option('display.max_columns', None) # A causa delle 61 colonne, bisogna disabilitare il limite del display.
 print(df.head()) # Campione prime 5 righe
 # A primo impatto sembra nella norma, con la maggior parte delle colonne in valori continui.
-# Si nota la presenza di numerose colonne con valori di 0 (il motivo principale è che va a rappresentare il False)
+# Si nota la presenza di numerose colonne con valori di 0 (il motivo principale è che vanno a rappresentare il False)
 
 print(df.info())
 # Come specificato dalla sorgente, confermiamo la mancanza di valori nulli in ogni colonna.
@@ -86,7 +88,7 @@ print(df.describe())
 # Valori degli indicatori statistici standard per ogni colonna.
 
 # Valori degli indicatori della label
-print(df[col].describe())
+print(df[df.columns[23]].describe())
 # Sono 39644 valori (visto che non ci sono Nan).
 # I valori variano da 1 a 843300.
 # I valori sono MOLTO SBILANCIATI (si nota dall'istogramma degli shares)
@@ -96,6 +98,31 @@ print(df[col].describe())
 # Così da optare per una CLASSIFICAZIONE BINARIA.
 # Se si vuole effettuare una multiclasse, è necessaria una ricerca nel dominio.
 
+# ELIMINARE LE RIGHE CON ALMENO UN OUTLIER.
+df_float = df_brutta.select_dtypes(include=['float'])
+
+def gestisci_outlier(col):
+    Q1 = col.quantile(0.25)
+    Q3 = col.quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    col[col < lower_bound] = lower_bound
+    col[col > upper_bound] = upper_bound
+    return col
+
+# Applica la funzione a ciascuna colonna float
+df_brutta[df_float.columns] = df[df_float.columns].apply(gestisci_outlier)
+
+print(df)
+
+df_brutta.hist(figsize=(25, 22))
+plt.show()
+
+df_brutta[df.columns[23]].hist(figsize=(25, 22))
+plt.show()
+
+df_brutta.info()
 """
 Business Goal: Predirre la popolarità mediatica di 
 vari articoli di Mashable,
@@ -143,7 +170,7 @@ GESTIONE DEGLI OUTILIER:
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    df = df[(df['shares'] > lower_bound) & (df['shares'] < upper_bound)]
+    df_brutta = df_brutta[(df_brutta > lower_bound) & (df_brutta < upper_bound)]
     
     
 CLASSIFICAZIONE BINARIA VS MULTICLASSE:
