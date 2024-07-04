@@ -22,7 +22,7 @@ print(df.info())
 print(df.isnull().sum()) # Check
 
 # Griglia di istogrammi che vanno a raffigurare la distribuzione dei valori per ogni colonna.
-df.hist(figsize=(25, 22))
+df_brutta.hist(figsize=(25, 22))
 plt.show()
 # Si notano diverse colonne con un solo valore.
 # Potrebbe essere insolito per quanto riguarda le colonne delle keywords.
@@ -74,6 +74,36 @@ print(correlazioni_strette)
 # posso estrarre dal mio dataframe (usata come matrice), la matrice triangolare superiore (valori che stanno sopra la diagonale principale).
 triang_sup = np.triu(np.ones_like(correlazioni_strette, dtype = bool))
 
+
+print(df.iloc[:,-1].describe())
+
+value_label1 = df_brutta.iloc[:,-1]
+value_label2 = value_label1[value_label1 > 3395.380184]
+
+print(value_label2.describe())
+
+value_label2 = value_label1[value_label1 > 10000.00]
+
+print(value_label2.describe())
+
+value_label2 = value_label1[value_label1 > 20000.00]
+
+print(value_label2.describe())
+
+descrizione_ultima = value_label2.describe()
+
+print(descrizione_ultima[0] / len(df_brutta) * 100, " %")
+# ciclo for dentro la funzione per applicarlo ad ogni feature, con l'obiettivo di stampare la % degli outliers.
+
+
+prima_lung = len(value_label2)
+
+
+value_label2.hist(by=None, ax=None, grid=True, xlabelsize=None, xrot=None, ylabelsize=None, yrot=None, figsize=None, bins=10, backend=None, legend=False)
+
+print(len(value_label2))
+print(value_label2.describe())
+
 # Rappresento grafico la matrice nascondendo la matrice triangolare superiore
 plt.figure(figsize=(18, 15))
 sns.heatmap(correlazioni_strette, mask=triang_sup, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, linecolor='grey')
@@ -86,6 +116,47 @@ plt.show()
 
 print(df.describe())
 # Valori degli indicatori statistici standard per ogni colonna.
+value = df.iloc[:,4].value_counts(ascending = True, sort = True, normalize = True)
+
+
+value_1 = df.iloc[:,4]
+value_2 = value_1[value_1 > 0.608696]
+"""
+plt.figure(figsize=(8, 6))
+value_2.plot(kind='bar', color='skyblue')
+plt.title('Distribuzione dei valori nella colonna "a"')
+plt.xlabel('Valori')
+plt.ylabel('Frequenza Relativa')
+plt.show()
+"""
+outlier = value_2[value_2 > 1]
+print(outlier)
+print(len(df_brutta))
+df_brutta.drop(df_brutta[df_brutta.iloc[:,4] == 701.00].index, inplace = True)
+
+print("dopo: ",len(df_brutta))
+
+
+value_1 = df_brutta.iloc[:,4]
+value_2 = value_1[value_1 > 0.608696]
+
+
+outlier = value_2[value_2 >= 1]
+print(outlier)
+
+#df.drop(df[df['city'] == 'Chicago'].index)
+
+
+plt.boxplot(value_2)
+plt.title('Distribuzione dei valori nella colonna "unique_tokens"')
+plt.xlabel('Valori')
+plt.ylabel('Frequenza.')
+plt.show()
+
+print(value_2.describe())
+
+
+
 
 # Valori degli indicatori della label
 print(df[df.columns[23]].describe())
