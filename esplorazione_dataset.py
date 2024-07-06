@@ -4,7 +4,7 @@ import seaborn as sns
 import numpy as np
 from scipy import stats
 
-df = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\OnlineNewsPopularity.csv')
+df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
 df_brutta = df.copy()
 
 print(df.shape) # 39644 righe x 61 colonne
@@ -194,6 +194,101 @@ df_brutta[df.columns[23]].hist(figsize=(25, 22))
 plt.show()
 
 df_brutta.info()
+
+
+# Metodo per quantificare il numero di outliers per ogni colonna 
+
+# Escludi la prima colonna non numerica
+df_numeric = df.iloc[:, 1:]
+
+# Funzione per calcolare il numero di outlier in una colonna
+def count_outliers(column):
+    Q1 = column.quantile(0.25)
+    Q3 = column.quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    outliers = column[(column < lower_bound) | (column > upper_bound)]
+    return len(outliers)
+
+# Calcola il numero di outlier per ogni colonna numerica
+outliers_count = df_numeric.apply(count_outliers)
+
+# Calcola la percentuale di outlier per ogni colonna
+total_rows = df_numeric.shape[0]
+outliers_percentage = (outliers_count / total_rows) * 100
+
+# Aggiungo il simbolo '%'
+outliers_percentage = outliers_percentage.map(lambda x: f'{x:.2f}%')
+
+# Visualizzazione Risultati
+
+outliers_summary = pd.DataFrame({
+    'Numero di Outliers': outliers_count,
+    'Percentuale di Outliers': outliers_percentage})
+
+# Stampa il risultato
+print(outliers_summary)
+
+
+""""""""""""""""""""""""""""""""""""""
+# Supponiamo di avere un DataFrame 'df' con la colonna 'shares'
+# Carichiamo il DataFrame
+# df = pd.read_csv('your_data.csv') # carica il tuo DataFrame qui
+
+# Rimuove gli spazi iniziali e finali dai nomi delle colonne
+df.columns = df.columns.str.strip()
+
+# Filtra gli articoli con fino a 5000 condivisioni
+df_filtered = df[df['shares'] <= 5000]
+
+# Visualizza le statistiche descrittive del numero di condivisioni per il subset filtrato
+shares_stats_filtered = df_filtered['shares'].describe()
+print("Statistiche Descrittive delle Condivisioni (fino a 5000):")
+print(shares_stats_filtered)
+
+# Numero totale di articoli nel subset filtrato
+total_articles_filtered = len(df_filtered)
+print(f"Numero totale di articoli (fino a 5000 condivisioni): {total_articles_filtered}")
+
+# Visualizza la distribuzione delle condivisioni con una curva gaussiana per il subset filtrato
+plt.figure(figsize=(12, 6))
+sns.histplot(df_filtered['shares'], kde=True)
+
+# Imposta i tick dell'asse x con scaglioni di 1 mila
+plt.xticks(ticks=range(0, 5001, 1000),
+           labels=[f'{i // 1000} mila' for i in range(0, 5001, 1000)])
+
+plt.title(f'Distribuzione delle Condivisioni degli Articoli (Fino a 5000, Totale articoli: {total_articles_filtered})')
+plt.xlabel('Numero di Condivisioni')
+plt.ylabel('Frequenza')
+plt.show()
+
+# Calcola l'IQR (Intervallo Interquartile) e identifica gli outliers nel subset filtrato
+Q1 = df_filtered['shares'].quantile(0.25)
+Q3 = df_filtered['shares'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Trova gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
+viral_articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
+print("Numero di Articoli Virali (fino a 5000 condivisioni):", len(viral_articles_filtered))
+print("Articoli Virali (fino a 5000 condivisioni):")
+print(viral_articles_filtered[['url', 'shares']])
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
 Business Goal: Predirre la popolarità mediatica di 
 vari articoli di Mashable,
