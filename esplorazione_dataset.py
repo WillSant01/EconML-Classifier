@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from scipy import stats
+from prettytable import PrettyTable
+
+
 
 df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
 df_brutta = df.copy()
@@ -13,13 +16,36 @@ pd.set_option('display.max_columns', None) # A causa delle 61 colonne, bisogna d
 print(df.head()) # Campione prime 5 righe
 # A primo impatto sembra nella norma, con la maggior parte delle colonne in valori continui.
 # Si nota la presenza di numerose colonne con valori di 0 (il motivo principale è che vanno a rappresentare il False)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-print(df.info())
+# Estrai le informazioni rilevanti dal DataFrame
+
+info_df = pd.DataFrame({'Colonna': df.columns,
+                        'Tipo Dati': df.dtypes,
+                        'Valori Non Null': df.count(),
+                        'Valori Null': df.isnull().sum()})
+
+# Crea una tabella PrettyTable
+
+table = PrettyTable()
+table.field_names = info_df.columns.tolist()
+
+# Aggiungi le righe della tabella
+
+for index, row in info_df.iterrows():
+    table.add_row(row.tolist())
+
+# Stampa la tabella
+print(table)
+
+#print(df.info())
 # Come specificato dalla sorgente, confermiamo la mancanza di valori nulli in ogni colonna.
 # Inoltre ad eccezione del url e dello share (nostro target) sono tutti di tipo float.
 # La presenza di numerose colonne di natura booleana comporta ad un'alta frequenza dei valori 0.0 e 1.0
-
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 print(df.isnull().sum()) # Check
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 # Griglia di istogrammi che vanno a raffigurare la distribuzione dei valori per ogni colonna.
 df_brutta.hist(figsize=(25, 22))
@@ -31,7 +57,7 @@ plt.show()
 # DISCLAIMER:
 # Le scale numeriche variano tra un grafico all'altro causando una possibile male interpretazione.
 # Inoltre per i grafici con una sola barra, non va a significare che hanno un valore a testa. (causa: spazio insufficiente del display) 
-
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Controlliamo effettivamente se ci sono colonne con 1 solo valore unico.
 print(df.nunique()) # Troppe colonne.
 
@@ -40,19 +66,36 @@ for col in df.columns:
     print(f"{col} : {df[col].nunique()}")
 # Ad eccezione delle colonne di True/false (conteggio = 2), la maggior parte delle colonne hanno valori regolari.
 # Indagherei sul perché colonne di min e max hanno pochi valori unici.
-
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Voglio ottenere i nomi delle colonne con una distribuzione altamente sbilanciata
-# Ho impostato lo sbilanciamento al 90% per prova
-feature_sbilanciate = []
-for col in df.columns:
-    if df[col].value_counts(normalize = True).max() > 0.90:
-        feature_sbilanciate.append(col)
-# Nelle vecchie prove avevo impostato il 98 e 95 %, ma evidentmente le feature non sono così sbilanciate.
-# Con 90 % ho ottenuto 4 nomi.
-# DUBITO delle riuscita di questo for ---> Rivedere il ciclo for.
-        
-print(f"Possibili anomalie: {feature_sbilanciate}")
 
+# Ho impostato lo sbilanciamento al 90% per prova
+
+def find_imbalanced_features(df, threshold=0.9):
+
+  imbalanced_features = []
+  for col in df.columns:
+    if df[col].value_counts(normalize=True).max() > threshold:
+      imbalanced_features.append(col)
+  return imbalanced_features
+
+# Trova le feature sbilanciate
+
+features_sbilanciate = find_imbalanced_features(df, 0.9)
+
+# Visualizza la distribuzione delle feature sbilanciate
+
+for feature in features_sbilanciate:
+  plt.figure()
+  plt.title(f"Distribuzione di {feature}")
+  df[feature].value_counts().plot(kind='bar')
+  plt.xlabel("Valore")
+  plt.ylabel("Conteggio")
+  plt.show()
+
+print(f"Possibili anomalie: {features_sbilanciate}")
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Vorrei vedere se le feature sono linearmente indipendenti
 
 # Qua ottengo la matrice di correlazione tra le colonne del dataframe escludendo la prima colonna (essendo l'unica colonna in stringhe)
@@ -155,21 +198,26 @@ plt.show()
 
 print(value_2.describe())
 
-
-
-
 # Valori degli indicatori della label
+
 print(df[df.columns[23]].describe())
+
 # Sono 39644 valori (visto che non ci sono Nan).
+
 # I valori variano da 1 a 843300.
+
 # I valori sono MOLTO SBILANCIATI (si nota dall'istogramma degli shares)
+
 # Quindi la media non è assolutamente consigliata da utilizzare come treshold per mappatura (dipendente dagli outlier)
 
 # POSSIBILE SOLUZIONE: prendiamo in considerazione la MEDIANA (il quartile 50%), per ottenere due classi BILANCIATE.
+
 # Così da optare per una CLASSIFICAZIONE BINARIA.
+
 # Se si vuole effettuare una multiclasse, è necessaria una ricerca nel dominio.
 
 # ELIMINARE LE RIGHE CON ALMENO UN OUTLIER.
+
 df_float = df_brutta.select_dtypes(include=['float'])
 
 def gestisci_outlier(col):
@@ -183,6 +231,7 @@ def gestisci_outlier(col):
     return col
 
 # Applica la funzione a ciascuna colonna float
+
 df_brutta[df_float.columns] = df[df_float.columns].apply(gestisci_outlier)
 
 print(df)
@@ -195,13 +244,16 @@ plt.show()
 
 df_brutta.info()
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 # Metodo per quantificare il numero di outliers per ogni colonna 
 
 # Escludi la prima colonna non numerica
+
 df_numeric = df.iloc[:, 1:]
 
 # Funzione per calcolare il numero di outlier in una colonna
+
 def count_outliers(column):
     Q1 = column.quantile(0.25)
     Q3 = column.quantile(0.75)
@@ -212,13 +264,17 @@ def count_outliers(column):
     return len(outliers)
 
 # Calcola il numero di outlier per ogni colonna numerica
+
 outliers_count = df_numeric.apply(count_outliers)
 
 # Calcola la percentuale di outlier per ogni colonna
+
 total_rows = df_numeric.shape[0]
+
 outliers_percentage = (outliers_count / total_rows) * 100
 
 # Aggiungo il simbolo '%'
+
 outliers_percentage = outliers_percentage.map(lambda x: f'{x:.2f}%')
 
 # Visualizzazione Risultati
@@ -228,43 +284,44 @@ outliers_summary = pd.DataFrame({
     'Percentuale di Outliers': outliers_percentage})
 
 # Stampa il risultato
+
 print(outliers_summary)
 
 
-""""""""""""""""""""""""""""""""""""""
-# Supponiamo di avere un DataFrame 'df' con la colonna 'shares'
-# Carichiamo il DataFrame
-# df = pd.read_csv('your_data.csv') # carica il tuo DataFrame qui
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-# Rimuove gli spazi iniziali e finali dai nomi delle colonne
-df.columns = df.columns.str.strip()
+# Filtra gli articoli con fino a 10'000 condivisioni
 
-# Filtra gli articoli con fino a 5000 condivisioni
-df_filtered = df[df['shares'] <= 5000]
+df_filtered = df[df['shares'] <= 10000]
 
-# Visualizza le statistiche descrittive del numero di condivisioni per il subset filtrato
+# Visualizza le statistiche descrittive del numero di condivisioni per gli 'shares' filtrati
+
 shares_stats_filtered = df_filtered['shares'].describe()
-print("Statistiche Descrittive delle Condivisioni (fino a 5000):")
+print("Statistiche Descrittive delle Condivisioni (fino a 10000):")
 print(shares_stats_filtered)
 
 # Numero totale di articoli nel subset filtrato
-total_articles_filtered = len(df_filtered)
-print(f"Numero totale di articoli (fino a 5000 condivisioni): {total_articles_filtered}")
 
-# Visualizza la distribuzione delle condivisioni con una curva gaussiana per il subset filtrato
+total_articles_filtered = len(df_filtered)
+print(f"Numero totale di articoli (fino a 10000 condivisioni): {total_articles_filtered}")
+
+# Visualizza la distribuzione degli 'shares' con una curva gaussiana per il subset filtrato
+
 plt.figure(figsize=(12, 6))
 sns.histplot(df_filtered['shares'], kde=True)
 
-# Imposta i tick dell'asse x con scaglioni di 1 mila
-plt.xticks(ticks=range(0, 5001, 1000),
-           labels=[f'{i // 1000} mila' for i in range(0, 5001, 1000)])
+# Imposta l'unità di misura delle asse x
 
-plt.title(f'Distribuzione delle Condivisioni degli Articoli (Fino a 5000, Totale articoli: {total_articles_filtered})')
+plt.xticks(ticks=range(0, 10001, 1000),
+           labels=[f'{i // 1000} mila' for i in range(0, 10001, 1000)])
+
+plt.title(f'Distribuzione delle Condivisioni degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
 plt.xlabel('Numero di Condivisioni')
 plt.ylabel('Frequenza')
 plt.show()
 
 # Calcola l'IQR (Intervallo Interquartile) e identifica gli outliers nel subset filtrato
+
 Q1 = df_filtered['shares'].quantile(0.25)
 Q3 = df_filtered['shares'].quantile(0.75)
 IQR = Q3 - Q1
@@ -273,13 +330,81 @@ upper_bound = Q3 + 1.5 * IQR
 
 # Trova gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
 viral_articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
-print("Numero di Articoli Virali (fino a 5000 condivisioni):", len(viral_articles_filtered))
-print("Articoli Virali (fino a 5000 condivisioni):")
+print("Numero di Articoli Virali (fino a 10000 condivisioni):", len(viral_articles_filtered))
+print("Articoli Virali (fino a 10000 condivisioni):")
 print(viral_articles_filtered[['url', 'shares']])
 
+#miglior modo di classificare shares di articoli di giornale
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+# Definisci le soglie
 
+soglia_bassa = 900
+
+soglia_alta = 4250
+
+# Definisci le classi
+
+def classificazione_shares(shares):
+    if shares < soglia_bassa:
+        return 'Poco Popolare'
+    elif shares < soglia_alta:
+        return 'Moderatamente Popolare'
+    else:
+        return 'Molto Popolare'
+
+# Applica la funzione di classificazione al DataFrame
+
+df['classe'] = df['shares'].apply(classificazione_shares)
+
+# Conta il numero di articoli per ciascuna classe e crea un DataFrame
+
+conteggio_classi = df['classe'].value_counts().reset_index()
+
+conteggio_classi.columns = ['Classe', 'Conteggio']
+
+# Visualizza la tabella nella console con il numero preciso di articoli 
+
+print(conteggio_classi)
+
+# Crea un grafico a barre per la visualizzazione grafica delle classi
+
+plt.bar(conteggio_classi['Classe'], conteggio_classi['Conteggio'])
+plt.xlabel('Classe')
+plt.ylabel('Numero di articoli')
+plt.title('Distribuzione delle classi')
+plt.show()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#dividere distribuzione in 99 parti e randomaticamente assegnarlo agli outliers
+
+#grafici utili alle spiegazioni
+
+# Definiamo una funzione per identificare gli outliers
+def trova_outliers(df, colonna, z_score_threshold=3):
+  
+
+  # Calcoliamo lo z-score
+  z_scores = np.abs((df[colonna] - df[colonna].mean()) / df[colonna].std())
+
+  # Identifichiamo gli outliers
+  outliers = df[colonna][z_scores > z_score_threshold]
+
+  return outliers
+
+# Applichiamo la funzione alla colonna specificata
+outliers_polarity = trova_outliers(df, 'title_sentiment_polarity')
+
+# Visualizziamo gli outliers
+print("Valori degli outliers in title_sentiment_polarity:")
+print(outliers_polarity)
+
+# Per una visualizzazione più completa, puoi creare un box plot
+import matplotlib.pyplot as plt
+plt.boxplot(df['title_sentiment_polarity'])
+plt.title('Box plot di title_sentiment_polarity')
+plt.show()
 
 
 
