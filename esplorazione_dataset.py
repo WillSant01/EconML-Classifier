@@ -10,13 +10,17 @@ from prettytable import PrettyTable
 df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
 df_brutta = df.copy()
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 print(df.shape) # 39644 righe x 61 colonne
 
 pd.set_option('display.max_columns', None) # A causa delle 61 colonne, bisogna disabilitare il limite del display.
 print(df.head()) # Campione prime 5 righe
+
 # A primo impatto sembra nella norma, con la maggior parte delle colonne in valori continui.
 # Si nota la presenza di numerose colonne con valori di 0 (il motivo principale è che vanno a rappresentare il False)
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#VISUALIZZAZIONE SOTTOFORMA DI TABELLA DELLE INFORMAZIONI PRINCIPALE X COLONNA
 
 # Estrai le informazioni rilevanti dal DataFrame
 
@@ -36,40 +40,50 @@ for index, row in info_df.iterrows():
     table.add_row(row.tolist())
 
 # Stampa la tabella
+
 print(table)
 
-#print(df.info())
 # Come specificato dalla sorgente, confermiamo la mancanza di valori nulli in ogni colonna.
 # Inoltre ad eccezione del url e dello share (nostro target) sono tutti di tipo float.
 # La presenza di numerose colonne di natura booleana comporta ad un'alta frequenza dei valori 0.0 e 1.0
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#VISUALIZZARE VALORI NULLI
+
 print(df.isnull().sum()) # Check
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#VISUALIZZAZIONE GRAFICA DELLA DISTRIBUZIONE DI OGNI COLONNA
 
 # Griglia di istogrammi che vanno a raffigurare la distribuzione dei valori per ogni colonna.
+
 df_brutta.hist(figsize=(25, 22))
 plt.show()
+
 # Si notano diverse colonne con un solo valore.
 # Potrebbe essere insolito per quanto riguarda le colonne delle keywords.
-# Consigliato un approndimento del dominio in merito.
 
 # DISCLAIMER:
 # Le scale numeriche variano tra un grafico all'altro causando una possibile male interpretazione.
-# Inoltre per i grafici con una sola barra, non va a significare che hanno un valore a testa. (causa: spazio insufficiente del display) 
+# Inoltre per i grafici con una sola barra, non va a significare che hanno un valore a testa. (causa: spazio insufficiente del display)
+ 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Controlliamo effettivamente se ci sono colonne con 1 solo valore unico.
+# CONTROLLO VALORI UNICI
+
 print(df.nunique()) # Troppe colonne.
 
 # Ciclo sulle colonne e stampo i conteggi.
+
 for col in df.columns:
     print(f"{col} : {df[col].nunique()}")
+    
 # Ad eccezione delle colonne di True/false (conteggio = 2), la maggior parte delle colonne hanno valori regolari.
-# Indagherei sul perché colonne di min e max hanno pochi valori unici.
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Voglio ottenere i nomi delle colonne con una distribuzione altamente sbilanciata
 
-# Ho impostato lo sbilanciamento al 90% per prova
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+#FUNZIONE PER CAPIRE E VISUALIZZARE LE COLONNE ALTAMENTE SBILANCIATE
+
+#impostO lo sbilanciamento al 90% per prova
 
 def find_imbalanced_features(df, threshold=0.9):
 
@@ -246,7 +260,7 @@ df_brutta.info()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-# Metodo per quantificare il numero di outliers per ogni colonna 
+#FUNZIONE PER VEDERE NUMERICAMENTE IL NUMERO E LA % DI OUTLIERS PER OGNI COLONNA
 
 # Escludi la prima colonna non numerica
 
@@ -287,14 +301,56 @@ outliers_summary = pd.DataFrame({
 
 print(outliers_summary)
 
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER VISUALIZZARE ATTRAVERSO UN BOX PLOT GLI OUTLIERS
 
-# Filtra gli articoli con fino a 10'000 condivisioni
+# Definiamo una funzione per identificare gli outliers
+
+def trova_outliers(df, colonna, z_score_threshold=3):
+    # Calcoliamo lo z-score
+    z_scores = np.abs((df[colonna] - df[colonna].mean()) / df[colonna].std())
+
+    # Identifichiamo gli outliers
+    outliers = df[colonna][z_scores > z_score_threshold]
+
+    return outliers
+
+# Inserisci il nome della colonna che vuoi visualizzare
+
+colonna_da_analizzare = 'title_sentiment_polarity' 
+
+# Verifica che la colonna esista e sia numerica
+
+if colonna_da_analizzare in df.columns and df[colonna_da_analizzare].dtype in [np.int64, np.float64]:
+    
+    # Identifichiamo gli outliers per la colonna specificata
+    
+    outliers = trova_outliers(df, colonna_da_analizzare)
+
+    # Visualizziamo gli outliers
+    
+    print(f"Valori degli outliers in {colonna_da_analizzare}:")
+    print(outliers)
+
+    # Creiamo un box plot per la colonna specificata
+    
+    plt.figure()
+    plt.boxplot(df[colonna_da_analizzare].dropna())  # Rimuoviamo i valori NaN per evitare problemi nel plotting
+    plt.title(f'Box plot di {colonna_da_analizzare}')
+    plt.xlabel(colonna_da_analizzare)
+    plt.ylabel('Valori')
+    plt.show()
+else:
+    print(f"La colonna '{colonna_da_analizzare}' non esiste nel DataFrame o non è numerica.")
+    
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER VISUALIZZARE GRAFICAMENTE LA DISTRIBUZIONE DEI VALORI ALL'INTERNO DELLA COLONNA 'SHARES'
+
+# seleziona gli articoli con massimo 10'000 shares
 
 df_filtered = df[df['shares'] <= 10000]
 
-# Visualizza le statistiche descrittive del numero di condivisioni per gli 'shares' filtrati
+# Visualizza le informazioni per la colonna degli 'shares' filtrati
 
 shares_stats_filtered = df_filtered['shares'].describe()
 print("Statistiche Descrittive delle Condivisioni (fino a 10000):")
@@ -315,7 +371,7 @@ sns.histplot(df_filtered['shares'], kde=True)
 plt.xticks(ticks=range(0, 10001, 1000),
            labels=[f'{i // 1000} mila' for i in range(0, 10001, 1000)])
 
-plt.title(f'Distribuzione delle Condivisioni degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
+plt.title(f'Distribuzione dgli Share degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
 plt.xlabel('Numero di Condivisioni')
 plt.ylabel('Frequenza')
 plt.show()
@@ -334,17 +390,17 @@ print("Numero di Articoli Virali (fino a 10000 condivisioni):", len(viral_articl
 print("Articoli Virali (fino a 10000 condivisioni):")
 print(viral_articles_filtered[['url', 'shares']])
 
-#miglior modo di classificare shares di articoli di giornale
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER DIVIDERE IL DATASET IN TRE CLASSI
 
-# Definisci le soglie
+# definiamo le soglie per le tre classi
 
 soglia_bassa = 900
 
 soglia_alta = 4250
 
-# Definisci le classi
+# funzione def per creare le classi
 
 def classificazione_shares(shares):
     if shares < soglia_bassa:
@@ -377,40 +433,64 @@ plt.title('Distribuzione delle classi')
 plt.show()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#dividere distribuzione in 99 parti e randomaticamente assegnarlo agli outliers
 
-#grafici utili alle spiegazioni
+#FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (da migliorare) 
 
-# Definiamo una funzione per identificare gli outliers
-def trova_outliers(df, colonna, z_score_threshold=3):
-  
+def analizza_distribuzione(df):
+    # Chiedi all'utente il nome della colonna
+    colonna = input("Inserisci il nome della colonna da analizzare: ")
 
-  # Calcoliamo lo z-score
-  z_scores = np.abs((df[colonna] - df[colonna].mean()) / df[colonna].std())
+    # Controlla se la colonna esiste nel DataFrame
+    if colonna not in df.columns:
+        print(f"La colonna '{colonna}' non esiste nel DataFrame.")
+        return
 
-  # Identifichiamo gli outliers
-  outliers = df[colonna][z_scores > z_score_threshold]
+    # Calcola la skewness
+    skewness = df[colonna].skew()
+    print(f"La skewness della colonna '{colonna}' è: {skewness:.2f}")
 
-  return outliers
+    # Interpretazione della skewness
+    if skewness > 0:
+        print(f"La distribuzione della colonna '{colonna}' è positivamente skewed (asimmetrica a destra).")
+    elif skewness < 0:
+        print(f"La distribuzione della colonna '{colonna}' è negativamente skewed (asimmetrica a sinistra).")
+    else:
+        print(f"La distribuzione della colonna '{colonna}' è approssimativamente simmetrica.")
 
-# Applichiamo la funzione alla colonna specificata
-outliers_polarity = trova_outliers(df, 'title_sentiment_polarity')
+    # Crea l'istogramma con curva di densità
+    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='density')
 
-# Visualizziamo gli outliers
-print("Valori degli outliers in title_sentiment_polarity:")
-print(outliers_polarity)
+    # Imposta il titolo del grafico
+    plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
 
-# Per una visualizzazione più completa, puoi creare un box plot
-import matplotlib.pyplot as plt
-plt.boxplot(df['title_sentiment_polarity'])
-plt.title('Box plot di title_sentiment_polarity')
+    # Mostra il grafico
+    plt.show()
+
+# Carica il tuo DataFrame
+df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
+
+# Chiama la funzione
+analizza_distribuzione(df)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE .displot
+
+# Rimuovi spazi indesiderati dai nomi delle colonne
+df.columns = df.columns.str.strip()
+
+# Verifica che il nome della colonna sia corretto
+print("Nomi delle colonne nel DataFrame dopo la rimozione degli spazi:", df.columns)
+
+# Esegui il codice di visualizzazione con limiti asse x
+sns.displot(data=df, x='shares', kind='kde')
+plt.xlim(0, 10000)
+plt.title('Distribuzione delle condivisioni')
 plt.show()
 
-
-
-
-
-
+sns.displot(data=df, x='shares', hue='is_weekend', kind='kde')
+plt.xlim(0, 10000)
+plt.title('Distribuzione delle condivisioni nei weekend e nei giorni feriali')
+plt.show()
 
 
 
