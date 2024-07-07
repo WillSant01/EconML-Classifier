@@ -5,11 +5,11 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 
 # Caricamento del dataset
-data = pd.read_csv('OnlineNewsPopularity.csv')
+data = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv')
 
 # Separazione delle feature e dell'etichetta
-X = data.drop('successo', axis=1)  # tutte le colonne eccetto 'successo'
-y = data['successo']  # la colonna 'successo'
+X = data.drop('classe', axis=1)  # tutte le colonne eccetto 'successo'
+y = data['classe']  # la colonna 'successo'
 
 # Divisione del dataset in training e testing set
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
