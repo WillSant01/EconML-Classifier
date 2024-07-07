@@ -7,11 +7,11 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import GridSearchCV
 
 # Caricamento del dataset
-data = pd.read_csv('OnlineNewsPopularity.csv')
+data = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv')
 
 # Separazione delle feature e dell'etichetta
-X = data.drop('successo', axis=1) # tutte le colonne eccetto 'successo'
-y = data['successo']  # la colonna 'successo'
+X = data.drop('classe', axis=1) # tutte le colonne eccetto 'successo'
+y = data['classe']  # la colonna 'successo'
 
 # mettere feature names e target names
 
@@ -45,15 +45,15 @@ plt.title("Decision Tree - C4.5 (Wine Dataset)")
 plt.show() """
 
 # visualizzare la matrice di confusione
-
-""" # crea una figura di dimensioni 10x7
+target_names = data['classe'].unique().tolist()
+ # crea una figura di dimensioni 10x7
 plt.figure(figsize=(10, 7))
 # crea una mappa di calore per la matrice di confusione con annotazioni e colori.
 sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=target_names, yticklabels=target_names)
 plt.xlabel('Predicted')
 plt.ylabel('True')
 plt.title('Confusion Matrix')
-plt.show() """
+plt.show()
 
 # Tuning (ottimizzare)
 
@@ -72,6 +72,18 @@ param_grid = {
 grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=5, scoring='accuracy', n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
+""" GridSearchCV : È uno strumento di scikit-learn che permette di effettuare una ricerca attraverso una griglia specificata di parametri per un modello.
+
+    estimator : Il modello che si vuole ottimizzare, in questo caso un SVC (Support Vector Classifier).
+    param_grid : La griglia di iperparametri definita in precedenza.
+    
+    cv : Cross-validation, il numero di suddivisioni del dataset da usare per la validazione incrociata. 
+    Qui, cv=5 indica che si utilizzerà una cross-validation a 5 fold.
+    scoring: La metrica di valutazione da ottimizzare. Qui viene utilizzata l'accuratezza (accuracy).
+   
+    n_jobs: Il numero di job da eseguire in parallelo. -1 significa che verranno utilizzati tutti i processori disponibili.
+"""
+
 # predizione sui dati di test con il miglior modello
 best_clf = grid_search.best_estimator_
 y_pred = best_clf.predict(X_test)
@@ -80,3 +92,5 @@ y_pred = best_clf.predict(X_test)
 print(f'Best parameters found: , {grid_search.best_params_}')
 print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
 print(classification_report(y_test, y_pred))
+
+# Primo giro: 62 %
