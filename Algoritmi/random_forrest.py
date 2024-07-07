@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, classification_report
 # da controllare bene
 
 # Caricamento del dataset
-data = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv')
+data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_outliers.csv")
 
 # Separazione delle feature e dell'etichetta
 X = data.drop('classe', axis=1)  # tutte le colonne eccetto 'successo'
@@ -24,16 +24,20 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # Inizializzazione del modello RandomForestClassifier
 clf = RandomForestClassifier(random_state=42)
 
-# Valutazione del modello
-print(f'Accuracy: {accuracy_score(y_test, y)}')
-print(classification_report(y_test, y))
+# Valutazione del modello iniziale
+clf.fit(X_train, y_train)
+y_pred_initial = clf.predict(X_test)
+print(f'Initial Accuracy: {accuracy_score(y_test, y_pred_initial)}')
+print(classification_report(y_test, y_pred_initial))
+
+# 62% di accuracy senza ottimizazione
 
 # Tuning (ottimizzazione)
 
 # Definizione della griglia di iperparametri
 param_grid = {
-    'n_estimators': [100, 200, 300], # max_depth: profondità massima dell'albero
-    'max_depth': [None, 10, 20, 30], # 
+    'n_estimators': [100, 200, 300], # numero di alberi nella foresta
+    'max_depth': [None, 10, 20, 30], # max_depth: profondità massima dell'albero
     'min_samples_split': [2, 5, 10], # min_samples_split: numero minimo di campioni richiesti per suddividere un nodo
     'min_samples_leaf': [1, 2, 4], # min_sample_leaf : numero minimo di campioni che un nodo foglia deve contenere
     'max_features': ['auto', 'sqrt', 'log2'] # max_features : numero massimo di caratteristiche da considerare per trovare la migliore divisione
@@ -55,10 +59,18 @@ grid_search.fit(X_train, y_train)
     n_jobs: Il numero di job da eseguire in parallelo. -1 significa che verranno utilizzati tutti i processori disponibili.
 """
 
-# OOB (errore-out-bag)
+# Predizione sui dati di test con il miglior modello
+best_clf = grid_search.best_estimator_
+y_pred = best_clf.predict(X_test)
 
-clf.set_params(warm_start=True,
-                  oob_score=True)
+# Valutazione del modello
+print(f'Best parameters: {grid_search.best_params_}')
+print(f'Optimized Accuracy: {accuracy_score(y_test, y_pred)}')
+print(classification_report(y_test, y_pred))
+
+# OOB (Out-of-Bag) error rate
+best_clf.set_params(oob_score=True)
+best_clf.fit(X_train, y_train)
 
 min_estimators = 15
 max_estimators = 1000
@@ -66,26 +78,18 @@ max_estimators = 1000
 error_rate = {}
 
 for i in range(min_estimators, max_estimators + 1):
-    clf.set_params(n_estimators=i)
-    clf.fit(training_set, class_set)
-
-    oob_error = 1 - clf.oob_score_
+    best_clf.set_params(n_estimators=i)
+    best_clf.fit(X_train, y_train)
+    oob_error = 1 - best_clf.oob_score_
     error_rate[i] = oob_error
 
 oob_series = pd.Series(error_rate)
 
 fig, ax = plt.subplots(figsize=(10, 10))
-
 ax.set_facecolor('#fafafa')
-
-oob_series.plot(kind='line',
-                color='red')
-plt.axhline(0.04,
-            color='#875FDB',
-           linestyle='--')
-plt.axhline(0.05,
-            color='#875FDB',
-           linestyle='--')
+oob_series.plot(kind='line', color='red')
+plt.axhline(0.04, color='#875FDB', linestyle='--')
+plt.axhline(0.05, color='#875FDB', linestyle='--')
 plt.xlabel('n_estimators')
 plt.ylabel('OOB Error Rate')
 plt.title('OOB Error Rate Across various Forest sizes \n(From 15 to 1000 trees)')
@@ -95,17 +99,15 @@ print('OOB Error rate for 400 trees is: {0:.5f}'.format(oob_series[400]))
 
 # imposteremo il numero di alberi calcolato utilizzando
 # il tasso di errore OOB, rimuovendo i parametri warm_start e oob_score. 
-# Includeremo inoltre il parametro bootstrap.
+# Includeremo inoltre il parametro bootstrap
 clf.set_params(n_estimators=400,
                   bootstrap = True,
                   warm_start=False,
                   oob_score=False)
 
-# Predizione sui dati di test con il miglior modello
-best_clf = grid_search.best_estimator_
-y_pred = best_clf.predict(X_test)
+# Predizione finale sui dati di test
+y_pred_final = best_clf.predict(X_test)
 
-# Valutazione del modello
-print(f'Best parameters: {grid_search.best_params_}')
-print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
-print(classification_report(y_test, y_pred))
+# Valutazione del modello finale
+print(f'Final Accuracy: {accuracy_score(y_test, y_pred_final)}')
+print(classification_report(y_test, y_pred_final))

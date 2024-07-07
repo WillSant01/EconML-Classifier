@@ -5,11 +5,11 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 
 # Caricamento del dataset
-data = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv')
+data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_outliers.csv")
 
 # Separazione delle feature e dell'etichetta
-X = data.drop('classe', axis=1)  # tutte le colonne eccetto 'successo'
-y = data['classe']  # la colonna 'successo'
+X = data.drop('classe', axis=1)  # tutte le colonne eccetto 'classe'
+y = data['classe']  # la colonna 'classe'
 
 # Divisione del dataset in training e testing set
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
@@ -19,20 +19,23 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-
-# Valutazione del modello
-print(f'Accuracy: {accuracy_score(y_test, y)}')
-print(classification_report(y_test, y)) #capire questo passaggio
-
-#Tuning (ottimizzare)
-
 # Inizializzazione del modello SVC (Support Vector Classifier)
-svc = SVC()
+svc = SVC(random_state=42)
+
+# Valutazione del modello iniziale
+svc.fit(X_train, y_train)
+y_pred_initial = svc.predict(X_test)
+print(f'Initial Accuracy: {accuracy_score(y_test, y_pred_initial)}')
+print(classification_report(y_test, y_pred_initial))
+
+# 62% di accuracy senza ottimizazione
+
+# Tuning (ottimizzazione)
 
 # Definizione della griglia di iperparametri
 param_grid = {
-    'C': [0.1, 1, 10, 100],
-    'gamma': ['scale', 'auto'],
+    'C': [0.01, 0.1, 1, 10, 100, 1000],
+    'gamma': [0.001, 0.01, 0.1, 1, 'scale', 'auto'],
     'kernel': ['linear', 'poly', 'rbf', 'sigmoid']
 }
 
@@ -66,7 +69,6 @@ grid_search.fit(X_train, y_train)
 # Predizione sui dati di test con il miglior modello
 best_svc = grid_search.best_estimator_
 y_pred = best_svc.predict(X_test)
-
 
 """ 
 grid_search.best_estimator_: Una volta completata la ricerca sulla griglia, 
