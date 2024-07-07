@@ -72,6 +72,18 @@ param_grid = {
 grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=5, scoring='accuracy', n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
+""" GridSearchCV : È uno strumento di scikit-learn che permette di effettuare una ricerca attraverso una griglia specificata di parametri per un modello.
+
+    estimator : Il modello che si vuole ottimizzare, in questo caso un SVC (Support Vector Classifier).
+    param_grid : La griglia di iperparametri definita in precedenza.
+    
+    cv : Cross-validation, il numero di suddivisioni del dataset da usare per la validazione incrociata. 
+    Qui, cv=5 indica che si utilizzerà una cross-validation a 5 fold.
+    scoring: La metrica di valutazione da ottimizzare. Qui viene utilizzata l'accuratezza (accuracy).
+   
+    n_jobs: Il numero di job da eseguire in parallelo. -1 significa che verranno utilizzati tutti i processori disponibili.
+"""
+
 # predizione sui dati di test con il miglior modello
 best_clf = grid_search.best_estimator_
 y_pred = best_clf.predict(X_test)
