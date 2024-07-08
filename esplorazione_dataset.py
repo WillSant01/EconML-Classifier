@@ -11,6 +11,11 @@ df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNew
 df_brutta = df.copy()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# Elimina gli spazi davanti ai nomi delle colonne
+
+df.columns = df.columns.str.strip()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 print(df.shape) # 39644 righe x 61 colonne
 
 pd.set_option('display.max_columns', None) # A causa delle 61 colonne, bisogna disabilitare il limite del display.
@@ -305,16 +310,17 @@ print(outliers_summary)
 #FUNZIONE PER VISUALIZZARE ATTRAVERSO UN BOX PLOT GLI OUTLIERS
 
 # Definiamo una funzione per identificare gli outliers
+
 def trova_outliers(df, colonna, z_score_threshold=3):
-    # Calcoliamo lo z-score
+    # Calcolo lo z-score
     z_scores = np.abs((df[colonna] - df[colonna].mean()) / df[colonna].std())
 
-    # Identifichiamo gli outliers
+    # Identifico gli outliers
     outliers = df[colonna][z_scores > z_score_threshold]
 
     return outliers
 
-# Inserisci il nome della colonna che vuoi visualizzare
+# inserire in input la colonna da analizzare
 
 colonna_da_analizzare = input("Inserisci il nome della colonna da analizzare: ")
 
@@ -342,11 +348,11 @@ else:
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE PER VISUALIZZARE GRAFICAMENTE LA DISTRIBUZIONE DEI VALORI ALL'INTERNO DELLA COLONNA 'SHARES'
 
-# seleziona gli articoli con massimo 10'000 shares
+# seleziono gli articoli con massimo 10'000 shares
 
 df_filtered = df[df['shares'] <= 10000]
 
-# Visualizza le informazioni per la colonna degli 'shares' filtrati
+# Visualizzo le informazioni per la colonna degli 'shares' filtrati
 
 shares_stats_filtered = df_filtered['shares'].describe()
 print("Statistiche Descrittive delle Condivisioni (fino a 10000):")
@@ -357,22 +363,22 @@ print(shares_stats_filtered)
 total_articles_filtered = len(df_filtered)
 print(f"Numero totale di articoli (fino a 10000 condivisioni): {total_articles_filtered}")
 
-# Visualizza la distribuzione degli 'shares' con una curva gaussiana per il subset filtrato
+# Visualizzo la distribuzione degli 'shares' con una curva gaussiana per il subset filtrato
 
 plt.figure(figsize=(12, 6))
 sns.histplot(df_filtered['shares'], kde=True)
 
-# Imposta l'unità di misura delle asse x
+# Imposto l'unità di misura delle asse x
 
 plt.xticks(ticks=range(0, 10001, 1000),
            labels=[f'{i // 1000} mila' for i in range(0, 10001, 1000)])
 
-plt.title(f'Distribuzione dgli Share degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
+plt.title(f'Distribuzione degli Share degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
 plt.xlabel('Numero di Condivisioni')
 plt.ylabel('Frequenza')
 plt.show()
 
-# Calcola l'IQR (Intervallo Interquartile) e identifica gli outliers nel subset filtrato
+# Calcolo l'IQR (Intervallo Interquartile) e identifico gli outliers nel subset filtrato
 
 Q1 = df_filtered['shares'].quantile(0.25)
 Q3 = df_filtered['shares'].quantile(0.75)
@@ -380,11 +386,11 @@ IQR = Q3 - Q1
 lower_bound = Q1 - 1.5 * IQR
 upper_bound = Q3 + 1.5 * IQR
 
-# Trova gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
-viral_articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
-print("Numero di Articoli Virali (fino a 10000 condivisioni):", len(viral_articles_filtered))
-print("Articoli Virali (fino a 10000 condivisioni):")
-print(viral_articles_filtered[['url', 'shares']])
+# Trovo gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
+articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
+print("Numero di Articoli filtrati (fino a 10000 condivisioni):", len(articles_filtered))
+print("Articoli filtrati (fino a 10000 condivisioni):")
+print(articles_filtered[['url', 'shares']])
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -430,7 +436,7 @@ plt.show()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-#FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (da migliorare) 
+#FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (distribuzione dei dati) 
 
 def analizza_distribuzione(df):
     # Chiedi all'utente il nome della colonna
@@ -454,16 +460,18 @@ def analizza_distribuzione(df):
         print(f"La distribuzione della colonna '{colonna}' è approssimativamente simmetrica.")
 
     # Crea l'istogramma con curva di densità
-    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='density')
+    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='count')
 
     # Imposta il titolo del grafico
     plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
 
+    # Se la colonna è 'shares', limita l'asse X a 10000
+    if colonna == ' shares':
+        plt.xlim(0, 10000)
+        plt.xlabel('Numero di condivisioni (limite a 10000)')
+
     # Mostra il grafico
     plt.show()
-
-# Carica il tuo DataFrame
-df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
 
 # Chiama la funzione
 analizza_distribuzione(df)
@@ -471,21 +479,18 @@ analizza_distribuzione(df)
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE .displot
 
-# Rimuovi spazi indesiderati dai nomi delle colonne
+# Assicurati che i nomi delle colonne non abbiano spazi iniziali o finali
 df.columns = df.columns.str.strip()
 
 # Verifica che il nome della colonna sia corretto
 print("Nomi delle colonne nel DataFrame dopo la rimozione degli spazi:", df.columns)
 
-# Esegui il codice di visualizzazione con limiti asse x
+# Visualizzazione della distribuzione della colonna 'shares'
 sns.displot(data=df, x='shares', kind='kde')
 plt.xlim(0, 10000)
 plt.title('Distribuzione delle condivisioni')
-plt.show()
-
-sns.displot(data=df, x='shares', hue='is_weekend', kind='kde')
-plt.xlim(0, 10000)
-plt.title('Distribuzione delle condivisioni nei weekend e nei giorni feriali')
+plt.xlabel('Numero di condivisioni')
+plt.ylabel('Densità')
 plt.show()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
