@@ -97,7 +97,6 @@ df_brutta = df.copy()
 # A causa delle 61 colonne, bisogna disabilitare il limite del display.
 pd.set_option('display.max_columns', None)
 
-print(df_brutta.head())
 # Decidiamo di togliere:
 # - La colonna degli URL (gli indici identificano l'articolo)
 # - La colonna IS_WEEKEND (abbiamo già le colonne per i giorni della settimana -> ridondanza)
@@ -109,8 +108,14 @@ nomi = df_brutta.columns.to_list()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # RIMOZIONE DELLE COLONNE NON UTILI
 
-df_brutta.drop(['url', 'timedelta', 'is_weekend', 'abs_title_subjectivity',
-               'abs_title_sentiment_polarity'], axis=1, inplace=True)
+df_brutta.drop(['url', 'timedelta', 'is_weekend', 'title_subjectivity',
+               'title_sentiment_polarity'], axis=1, inplace=True)
+
+df_brutta["kw_min"] = df_brutta[["kw_min_min", "kw_min_max", "kw_min_avg"]].median(axis=1)
+df_brutta["kw_max"] = df_brutta[["kw_max_min", "kw_max_max", "kw_max_avg"]].median(axis=1)
+df_brutta["kw_avg"] = df_brutta[["kw_avg_min", "kw_avg_max", "kw_avg_avg"]].median(axis=1)
+
+df_brutta.drop(["kw_min_min", "kw_min_max", "kw_min_avg", "kw_max_min", "kw_max_max", "kw_max_avg"], axis=1, inplace=True)
 
 nomi = df_brutta.columns.to_list()
 
@@ -200,7 +205,7 @@ for column in X_winsorized.columns:
 # MAPPATURA DEL LABEL
 
 def classificazione_shares(shares):
-    if shares < 900:
+    if shares < 1400:
         return 1
     elif shares < 4250:
         return 2
@@ -242,7 +247,7 @@ y_pred_w = clf_w.predict(X_test_w)
 accuracy_w = accuracy_score(y_test_w, y_pred_w)
 print("Accuracy con winsorization pre mappatura:", accuracy_w)
 
-
+"""
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # CART 4.5 [scaling]
 
@@ -310,7 +315,7 @@ accuracy_l = accuracy_score(y_test_l, y_pred_l)
 print("Accuracy con trasformazione logaritmica:", accuracy_l)
 
 
-#df_brutta.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv', index=False)
+df_brutta.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv', index=False)
 
 
 
