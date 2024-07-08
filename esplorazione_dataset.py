@@ -305,7 +305,6 @@ print(outliers_summary)
 #FUNZIONE PER VISUALIZZARE ATTRAVERSO UN BOX PLOT GLI OUTLIERS
 
 # Definiamo una funzione per identificare gli outliers
-
 def trova_outliers(df, colonna, z_score_threshold=3):
     # Calcoliamo lo z-score
     z_scores = np.abs((df[colonna] - df[colonna].mean()) / df[colonna].std())
@@ -317,23 +316,20 @@ def trova_outliers(df, colonna, z_score_threshold=3):
 
 # Inserisci il nome della colonna che vuoi visualizzare
 
-colonna_da_analizzare = 'title_sentiment_polarity' 
+colonna_da_analizzare = input("Inserisci il nome della colonna da analizzare: ")
 
 # Verifica che la colonna esista e sia numerica
 
 if colonna_da_analizzare in df.columns and df[colonna_da_analizzare].dtype in [np.int64, np.float64]:
     
     # Identifichiamo gli outliers per la colonna specificata
-    
     outliers = trova_outliers(df, colonna_da_analizzare)
 
     # Visualizziamo gli outliers
-    
     print(f"Valori degli outliers in {colonna_da_analizzare}:")
     print(outliers)
 
     # Creiamo un box plot per la colonna specificata
-    
     plt.figure()
     plt.boxplot(df[colonna_da_analizzare].dropna())  # Rimuoviamo i valori NaN per evitare problemi nel plotting
     plt.title(f'Box plot di {colonna_da_analizzare}')
@@ -492,8 +488,17 @@ plt.xlim(0, 10000)
 plt.title('Distribuzione delle condivisioni nei weekend e nei giorni feriali')
 plt.show()
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE DESCRIBE PER COLONNA
 
+if ' shares' in df.columns:
+    descrizione = df[' shares'].describe()
+    print(descrizione)
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""   
+print(df[[' shares', ' kw_avg_avg']].corr())
+    
+    
 """
 Business Goal: Predirre la popolarità mediatica di 
 vari articoli di Mashable,
