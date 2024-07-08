@@ -36,7 +36,7 @@ print(classification_report(y_test, y_pred_initial))
 
 # Definizione della griglia di iperparametri
 param_grid = {
-    'n_estimators': [100, 200, 300], # numero di alberi nella foresta
+    'n_estimators': [10,50,100], # numero di alberi nella foresta
     'max_depth': [None, 10, 20, 30], # max_depth: profondità massima dell'albero
     'min_samples_split': [2, 5, 10], # min_samples_split: numero minimo di campioni richiesti per suddividere un nodo
     'min_samples_leaf': [1, 2, 4], # min_sample_leaf : numero minimo di campioni che un nodo foglia deve contenere

@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import GridSearchCV
 
 # Caricamento del dataset
-data = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv')
+data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_outliers.csv")
 
 # Separazione delle feature e dell'etichetta
 X = data.drop('classe', axis=1) # tutte le colonne eccetto 'successo'
@@ -45,7 +45,7 @@ plt.title("Decision Tree - C4.5 (Wine Dataset)")
 plt.show() """
 
 # visualizzare la matrice di confusione
-target_names = data['classe'].unique().tolist()
+""" target_names = data['classe'].unique().tolist()
  # crea una figura di dimensioni 10x7
 plt.figure(figsize=(10, 7))
 # crea una mappa di calore per la matrice di confusione con annotazioni e colori.
@@ -53,7 +53,7 @@ sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=target_n
 plt.xlabel('Predicted')
 plt.ylabel('True')
 plt.title('Confusion Matrix')
-plt.show()
+plt.show() """
 
 # Tuning (ottimizzare)
 
