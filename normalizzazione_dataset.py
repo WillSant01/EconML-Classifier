@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from scipy import stats
+from sklearn.preprocessing import RobustScaler
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from scipy.stats.mstats import winsorize
 
 """
 DOMANDE BASE:
@@ -107,6 +112,8 @@ nomi = df_brutta.columns.to_list()
 df_brutta.drop(['url', 'timedelta', 'is_weekend', 'abs_title_subjectivity',
                'abs_title_sentiment_polarity'], axis=1, inplace=True)
 
+nomi = df_brutta.columns.to_list()
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # FEATURE CONSTRUCTION
 
@@ -135,29 +142,7 @@ df_brutta = gestione_binario(df_brutta, "data_channel")
 # Per i giorni della settimana
 df_brutta = gestione_binario(df_brutta, "weekday")
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# MAPPATURA DEL LABEL
-
-soglia_bassa = 900
-
-soglia_alta = 4250
-
-# Definisci le classi
-
-def classificazione_shares(shares):
-    if shares < soglia_bassa:
-        return 1
-    elif shares < soglia_alta:
-        return 2
-    else:
-        return 3
-
-# Applica la funzione di classificazione al DataFrame
-
-df_brutta['classe'] = df_brutta['shares'].apply(classificazione_shares)
-
-df_brutta.drop(columns="shares", inplace=True)
-
+nomi = df_brutta.columns.to_list()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # OTTIMIZZAZIONE DELLA MEMORIA
@@ -172,7 +157,6 @@ df_brutta.dtypes
 df_brutta.memory_usage(deep=True)/1048576
 (df_brutta.memory_usage(deep=True)/1048576).sum()
 
-nomi = df_brutta.columns.to_list()
 
 def controllo_int(series):
     for num in series:
@@ -190,10 +174,10 @@ for col_name, non_decimal in zip(nomi, check):
         max_val = df_brutta[col_name].max()
         box.append([col_name, min_val, max_val])
 
-Tipo_check = pd.DataFrame(box, columns=['Nome', 'Minimo', 'Massimo'])
-Tipo_check.set_index('Nome', inplace=True)
+tipo_check = pd.DataFrame(box, columns=['Nome', 'Minimo', 'Massimo'])
+tipo_check.set_index('Nome', inplace=True)
         
-for index, row in Tipo_check.iterrows():
+for index, row in tipo_check.iterrows():
     if -128 <= row[0] and row[1] <= 127:
         df_brutta[index] = df_brutta[index].astype('int8')
     elif -32768 <= row[0] and row[1] <= 32767:
@@ -203,17 +187,130 @@ for index, row in Tipo_check.iterrows():
     else:
         df_brutta[index] = df_brutta[index].astype('int64')
 
+df_brutta.dtypes
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# WINSORIZATION (utile se vogliamo mantenere gli outliers)
+
+X_winsorized = df_brutta.copy()
+
+for column in X_winsorized.columns:
+    X_winsorized[column] = winsorize(df_brutta[column], limits=[0.05, 0.05])
     
-df_brutta['n_tokens_title'] = df_brutta['n_tokens_title'].astype('int8')
-df_brutta['classe'] = df_brutta['classe'].astype('int8')
-df_brutta['data_channel'] = df_brutta['data_channel'].astype('int8')
-df_brutta['weekday'] = df_brutta['weekday'].astype('int8')
+    
+# MAPPATURA DEL LABEL
+
+def classificazione_shares(shares):
+    if shares < 900:
+        return 1
+    elif shares < 4250:
+        return 2
+    else:
+        return 3
+
+# Applica la funzione di classificazione al DataFrame
+
+X_winsorized['classe'] = X_winsorized['shares'].apply(classificazione_shares)
+df_brutta['classe'] = df_brutta['shares'].apply(classificazione_shares)
+
+X_winsorized.drop(columns="shares", inplace=True)
+df_brutta.drop(columns="shares", inplace=True)
+
+nomi = df_brutta.columns.to_list()
+
+
+X = X_winsorized.drop('classe', axis=1)
+y = X_winsorized['classe']
+
+
+scaler = RobustScaler()
+scaled_data = scaler.fit_transform(X)
 
 
 
+# Scaling dei dati winsorizzati
+scaler_w = RobustScaler()
+scaled_data_winsorized = scaler_w.fit_transform(X_winsorized)
+
+# Dividi in set di addestramento e test
+X_train_w, X_test_w, y_train_w, y_test_w = train_test_split(scaled_data_winsorized, y, test_size=0.2, random_state=42)
+
+clf_w = DecisionTreeClassifier(criterion='entropy', max_depth=4)
+clf_w.fit(X_train_w, y_train_w)
 
 
-df_brutta.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv', index=False)
+y_pred_w = clf_w.predict(X_test_w)
+accuracy_w = accuracy_score(y_test_w, y_pred_w)
+print("Accuracy con winsorization pre mappatura:", accuracy_w)
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# CART 4.5 [scaling]
+
+X = df_brutta.drop['classe']
+y = df_brutta['classe']
+
+X_train, X_test, y_train, y_test = train_test_split(scaled_data, y, test_size=0.2, random_state=42)
+
+# Crea il modello Decision Tree Classifier
+clf = DecisionTreeClassifier(criterion='entropy', max_depth=4)
+
+# Addestra il modello
+clf.fit(X_train, y_train)
+
+# Fai le previsioni
+y_pred = clf.predict(X_test)
+
+# Valuta l'accuratezza del modello
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# WINSORIZATION (utile se vogliamo mantenere gli outliers)
+
+X_winsorized = df_brutta.copy()
+for column in df_brutta.columns:
+    X_winsorized[column] = winsorize(df_brutta[column], limits=[0.05, 0.05])
+
+# Scaling dei dati winsorizzati
+scaler = RobustScaler()
+scaled_data_winsorized = scaler.fit_transform(X_winsorized)
+
+# Dividi in set di addestramento e test
+X_train_w, X_test_w, y_train_w, y_test_w = train_test_split(scaled_data_winsorized, y, test_size=0.2, random_state=42)
+
+clf_w = DecisionTreeClassifier(criterion='entropy', max_depth=4)
+clf_w.fit(X_train_w, y_train_w)
+
+
+y_pred_w = clf_w.predict(X_test_w)
+accuracy_w = accuracy_score(y_test_w, y_pred_w)
+print("Accuracy con winsorization post mappatura:", accuracy_w)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# Logaritmica (utile se vogliamo solo ridurre la skewness)
+
+scaler = RobustScaler()
+
+# Applicazione del RobustScaler ai dati originali X
+scaled_X = scaler.fit_transform(X)
+
+# Applicazione della trasformazione logaritmica ai dati scalati
+X_log_transformed = pd.DataFrame(scaled_X, columns=X.columns).apply(lambda x: np.log1p(x))
+
+# Dividi in set di addestramento e test
+X_train_l, X_test_l, y_train_l, y_test_l = train_test_split(X_log_transformed, y, test_size=0.2, random_state=42)
+
+# Crea e addestra il modello con i dati trasformati
+clf_l = DecisionTreeClassifier(criterion='entropy', max_depth=4)
+clf_l.fit(X_train_l, y_train_l)
+
+# Effettua le previsioni e valuta l'accuratezza
+y_pred_l = clf_l.predict(X_test_l)
+accuracy_l = accuracy_score(y_test_l, y_pred_l)
+print("Accuracy con trasformazione logaritmica:", accuracy_l)
+
+
+#df_brutta.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_outliers.csv', index=False)
 
 
 
