@@ -8,15 +8,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
 from scipy.stats.mstats import winsorize
-import os
-import sys
 
-# CARICAMENTO DATASET
-script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-file_path = os.path.join(script_dir, "normalizzazione_dataset.py")
-print(os.getcwd())
-
-df = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_PRE_normalizzazione.csv")
+df = pd.read_csv(r"C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_PRE_normalizzazione.csv")
 
 X = df.drop(['classe'], axis=1)
 y = df['classe']
@@ -33,19 +26,18 @@ y_pred_initial = clf.predict(X_test)
 print(f'Initial Accuracy: {accuracy_score(y_test, y_pred_initial)}')
 print(classification_report(y_test, y_pred_initial))
 
-""" param_grid = {
-    'n_estimators': [10, 50, 100], # numero di alberi nella foresta
-    'max_depth': [None, 10, 20, 30], # max_depth: profondità massima dell'albero
-    'min_samples_split': [2, 5, 10], # min_samples_split: numero minimo di campioni richiesti per suddividere un nodo
-    'min_samples_leaf': [1, 2, 4], # min_sample_leaf : numero minimo di campioni che un nodo foglia deve contenere
-    'max_features': ['auto', 'sqrt', 'log2'] # max_features : numero massimo di caratteristiche da considerare per trovare la migliore divisione
+
+param_grid = {
+    'n_estimators': [200, 300], # numero di alberi nella foresta
+    'max_depth': [None], # max_depth: profondità massima dell'albero
+    'min_samples_split': [5, 10], # min_samples_split: numero minimo di campioni richiesti per suddividere un nodo
 }
 
 # Inizializzazione del GridSearchCV
 grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=5, scoring='accuracy', n_jobs=-1)
-grid_search.fit(X_train, y_train) """
-
-""" GridSearchCV : È uno strumento di scikit-learn che permette di effettuare una ricerca attraverso una griglia specificata di parametri per un modello.
+grid_search.fit(X_train, y_train)
+"""
+ GridSearchCV : È uno strumento di scikit-learn che permette di effettuare una ricerca attraverso una griglia specificata di parametri per un modello.
 
     estimator : Il modello che si vuole ottimizzare, in questo caso un SVC (Support Vector Classifier).
     param_grid : La griglia di iperparametri definita in precedenza.
@@ -58,7 +50,7 @@ grid_search.fit(X_train, y_train) """
 """
 
 # Predizione sui dati di test con il miglior modello
-""" best_clf = grid_search.best_estimator_
+best_clf = grid_search.best_estimator_
 y_pred = best_clf.predict(X_test)
 
 # Valutazione del modello

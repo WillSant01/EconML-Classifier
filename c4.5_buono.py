@@ -119,24 +119,21 @@ df_brutta.dtypes
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # MAPPATURA DEL LABEL
 
-X_winsorized = df_brutta.copy()
+df_winsorized = df_brutta.copy()
 
-for column in X_winsorized.columns:
-    X_winsorized[column] = winsorize(df_brutta[column], limits=[0.05, 0.05])
+for column in df_winsorized.columns:
+    df_winsorized[column] = winsorize(df_brutta[column], limits=[0.05, 0.05])
 
-X_winsorized['shares'].describe()
+df_winsorized['shares'].describe()
 df_brutta['shares'].describe()
 
 plt.figure(figsize=(12, 6))
-sns.histplot(X_winsorized['shares'], kde=True)
+sns.histplot(df_winsorized['shares'], kde=True)
 
 def classificazione_shares(shares):
-    T1 = np.percentile(shares, 30)
-    T2 = np.percentile(shares, 60)
-    
-    if shares <= T1:
+    if shares < 1400:
         return 1
-    elif shares < T2:
+    elif shares < 4250:
         return 2
     else:
         return 3
@@ -144,23 +141,23 @@ def classificazione_shares(shares):
 # Applica la funzione di classificazione al DataFrame
 
 df_brutta['classe'] = df_brutta['shares'].apply(classificazione_shares)
-X_winsorized['classe'] = X_winsorized['shares'].apply(classificazione_shares)
+df_winsorized['classe'] = df_winsorized['shares'].apply(classificazione_shares)
 
 df_brutta.drop(columns="shares", inplace=True)
-X_winsorized.drop(columns="shares", inplace=True)
+df_winsorized.drop(columns="shares", inplace=True)
 
 nomi = df_brutta.columns.to_list()
 
-X = X_winsorized.drop('classe', axis=1)
-y = X_winsorized['classe']
+X = df_winsorized.drop('classe', axis=1)
+y = df_winsorized['classe']
 
 
 # Scaling dei dati winsorizzati
 scaler_w = RobustScaler()
-scaled_data_winsorized = scaler_w.fit_transform(X_winsorized)
+X_scaled = scaler_w.fit_transform(X)
 
 pca = PCA()
-X_pca = pca.fit_transform(scaled_data_winsorized)
+X_pca = pca.fit_transform(X_scaled)
 
 explained_variance_ratio = pca.explained_variance_ratio_
 
@@ -183,7 +180,7 @@ X_pca = pca.fit_transform(X_pca)
 # Dividi in set di addestramento e test
 X_train_w, X_test_w, y_train_w, y_test_w = train_test_split(X_pca, y, test_size=0.2, random_state=42)
 
-clf_w = DecisionTreeClassifier(criterion='entropy', max_depth=4)
+clf_w = DecisionTreeClassifier(criterion='gini', max_depth=4)
 clf_w.fit(X_train_w, y_train_w)
 
 
