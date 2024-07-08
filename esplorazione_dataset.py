@@ -19,6 +19,25 @@ df_brutta = df.copy()
 
 df.columns = df.columns.str.strip()
 
+"""
+DOMANDE BASE:
+    1) Quanto è grande il dataset? df.shape()
+    2) Cosa assomiglia? df.head()
+    3) Tipologie delle colonne? df.info, modifica la tipologia per ottimizzare la memoria
+    4) Ci sono valori nulli? df.isnull().sum()
+    5) Matematicamente che aspetto hanno? df.describe()
+    6) Ci sono valori duplicati? df.duplicated().sum()
+    7) Ci sono correlazioni tra le colonne? df.corr()
+
+ANALISI UNI-VARIATA PER DATI NUMERICI:
+    1) Istogramma. plt.hist(df["colonna"], bins = num)
+    2) Distplot. sns.distplot(df["colonna"])
+    3) Boxplot. sns.boxplot(df["colonna"])
+    
+ANALISI BI-VARIATA TRA NUMERICO E NUMERICO:
+    1) Scatter-plot. sns.scatterplot(df["colonna1"], df["colonna2"], hue = df["colonna3"])
+"""
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 print(df.shape) # 39644 righe x 61 colonne
 

@@ -1,4 +1,6 @@
 import pandas as pd
+import os
+import sys
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -8,32 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from scipy.stats.mstats import winsorize
-
-"""
-DOMANDE BASE:
-    1) Quanto è grande il dataset? df.shape()
-    2) Cosa assomiglia? df.head()
-    3) Tipologie delle colonne? df.info, modifica la tipologia per ottimizzare la memoria
-    4) Ci sono valori nulli? df.isnull().sum()
-    5) Matematicamente che aspetto hanno? df.describe()
-    6) Ci sono valori duplicati? df.duplicated().sum()
-    7) Ci sono correlazioni tra le colonne? df.corr()
-
-ANALISI UNI-VARIATA PER DATI NUMERICI:
-    1) Istogramma. plt.hist(df["colonna"], bins = num)
-    2) Distplot. sns.distplot(df["colonna"])
-    3) Boxplot. sns.boxplot(df["colonna"])
-    
-ANALISI BI-VARIATA TRA NUMERICO E NUMERICO:
-    1) Scatter-plot. sns.scatterplot(df["colonna1"], df["colonna2"], hue = df["colonna3"])
-
-PANDAS PROFILING :
-    pip install pandas-profiling
-    from pandas_profiling import ProfileReport
-    
-    report = ProfileReport(df)
-    prof.to_file(output_file = "EDA_online_news.html")
-"""
+from sklearn.decomposition import PCA
 
 """
 FEATURE ENGINEERING
@@ -88,8 +65,11 @@ MATHEMATICAL TRASNFORMATIONS
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # CARICAMENTO DATASET
+script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+file_path = os.path.join(script_dir, "normalizzazione_dataset.py")
+print(os.getcwd())
 
-df = pd.read_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\OnlineNewsPopularity.csv')
+df = pd.read_csv(r'OnlineNewsPopularity.csv')
 df.columns = df.columns.str.lstrip() # tolgo gli spazi negli indici
 df_brutta = df.copy()
 
@@ -222,6 +202,8 @@ df_brutta.drop(columns="shares", inplace=True)
 
 nomi = df_brutta.columns.to_list()
 
+#df_brutta.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_PRE_normalizzazione.csv', index=False)
+#X_winsorized.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_POST_normalizzazione.csv', index=False)
 
 X = X_winsorized.drop('classe', axis=1)
 y = X_winsorized['classe']
@@ -230,11 +212,30 @@ y = X_winsorized['classe']
 scaler = RobustScaler()
 scaled_data = scaler.fit_transform(X)
 
-
-
 # Scaling dei dati winsorizzati
 scaler_w = RobustScaler()
 scaled_data_winsorized = scaler_w.fit_transform(X_winsorized)
+
+pca = PCA()
+X_pca = pca.fit_transform(scaled_data_winsorized)
+
+explained_variance_ratio = pca.explained_variance_ratio_
+
+# Calcola la varianza cumulativa spiegata
+cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
+
+# Traccia lo Scree Plot
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(explained_variance_ratio) + 1),
+         cumulative_variance_ratio, marker='o', linestyle='-', color='b')
+plt.xlabel('Numero di componenti principali')
+plt.ylabel('Varianza cumulativa spiegata')
+plt.title('Scree Plot')
+plt.grid(True)
+plt.show()
+
+pca = PCA(n_components=30)
+X_pca = pca.fit_transform(X_pca)
 
 # Dividi in set di addestramento e test
 X_train_w, X_test_w, y_train_w, y_test_w = train_test_split(scaled_data_winsorized, y, test_size=0.2, random_state=42)
