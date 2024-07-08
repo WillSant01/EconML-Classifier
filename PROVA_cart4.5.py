@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from scipy.stats import boxcox
+#from scipy.stats import boxcox
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.preprocessing import RobustScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
@@ -13,9 +13,9 @@ df = pd.read_csv(
     r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\OnlineNewsPopularity.csv')
 df.columns = df.columns.str.lstrip()  # tolgo gli spazi negli indici
 df_brutta = df.copy()
-
+df_brutta.head()
 df_brutta.drop(['url', 'timedelta', 'is_weekend', 'abs_title_subjectivity',
-               'abs_title_sentiment_polarity'], axis=1, inplace=True)
+               'title_sentiment_polarity', '', 'kw_max_max'], axis=1, inplace=True)
 
 
 def gestione_binario(data, keyword):
@@ -51,6 +51,7 @@ plt.xlabel('Valore della label')
 plt.ylabel('Frequenza')
 plt.show()
 
+X_log = np.log1p(X)
 y_log = np.log1p(y)
 # y_boxcox, _ = boxcox(y + 1)
 
