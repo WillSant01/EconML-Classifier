@@ -3,13 +3,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from scipy import stats
+import os
+import sys
 from prettytable import PrettyTable
 
 
+script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+file_path = os.path.join(script_dir, "esplorazione_dataset.py")
+print(os.getcwd())
 
-df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
+df = pd.read_csv(r"OnlineNewsPopularity.csv")
 df_brutta = df.copy()
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # Elimina gli spazi davanti ai nomi delle colonne
 
