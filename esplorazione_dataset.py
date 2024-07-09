@@ -8,17 +8,6 @@ import sys
 from prettytable import PrettyTable
 
 
-script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-file_path = os.path.join(script_dir, "esplorazione_dataset.py")
-print(os.getcwd())
-
-df = pd.read_csv(r"OnlineNewsPopularity.csv")
-df_brutta = df.copy()
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Elimina gli spazi davanti ai nomi delle colonne
-
-df.columns = df.columns.str.strip()
-
 """
 DOMANDE BASE:
     1) Quanto è grande il dataset? df.shape()
@@ -37,6 +26,14 @@ ANALISI UNI-VARIATA PER DATI NUMERICI:
 ANALISI BI-VARIATA TRA NUMERICO E NUMERICO:
     1) Scatter-plot. sns.scatterplot(df["colonna1"], df["colonna2"], hue = df["colonna3"])
 """
+
+
+script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+file_path = os.path.join(script_dir, "esplorazione_dataset.py")
+print(os.getcwd())
+
+df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
+df_brutta = df.copy()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 print(df.shape) # 39644 righe x 61 colonne
@@ -81,21 +78,6 @@ print(table)
 print(df.isnull().sum()) # Check
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#VISUALIZZAZIONE GRAFICA DELLA DISTRIBUZIONE DI OGNI COLONNA
-
-# Griglia di istogrammi che vanno a raffigurare la distribuzione dei valori per ogni colonna.
-
-df_brutta.hist(figsize=(25, 22))
-plt.show()
-
-# Si notano diverse colonne con un solo valore.
-# Potrebbe essere insolito per quanto riguarda le colonne delle keywords.
-
-# DISCLAIMER:
-# Le scale numeriche variano tra un grafico all'altro causando una possibile male interpretazione.
-# Inoltre per i grafici con una sola barra, non va a significare che hanno un valore a testa. (causa: spazio insufficiente del display)
- 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # CONTROLLO VALORI UNICI
 
 print(df.nunique()) # Troppe colonne.
@@ -108,7 +90,140 @@ for col in df.columns:
 # Ad eccezione delle colonne di True/false (conteggio = 2), la maggior parte delle colonne hanno valori regolari.
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# Elimina gli spazi davanti ai nomi delle colonne
 
+df.columns = df.columns.str.strip()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+#FUNZIONE DESCRIBE PER COLONNA
+
+def describe_column(df, column_name):
+  
+    if column_name in df.columns:
+        descrizione = df[column_name].describe()
+        return descrizione
+    else:
+        print(f"La colonna '{column_name}' non esiste nel DataFrame.")
+        return None
+
+column_name = input("Inserisci il nome della colonna da descrivere:")
+descrizione = describe_column(df, column_name)
+
+if descrizione is not None:
+    print(descrizione)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER VEDERE LA CORRELAZIONE TRA DUE COLONNE
+
+def calculate_correlation(df, col1, col2):
+   
+    correlation = df[[col1, col2]].corr().iloc[0, 1]
+    return correlation
+
+col1 = input("Inserisci il nome della prima colonna: ")
+col2 = input("Inserisci il nome della seconda colonna: ")
+corr_value = calculate_correlation(df, col1, col2)
+
+print(f"La correlazione tra {col1} e {col2} è: {corr_value}")
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+# Vorrei vedere se le feature sono linearmente indipendenti
+
+# Qua ottengo la matrice di correlazione tra le colonne del dataframe escludendo la prima colonna (essendo l'unica colonna in stringhe)
+matrice_correlazione = df.iloc[:, 1:].corr()
+
+# Mi disinteresso delle mancanze di correlazione (valori intorno allo 0).
+# Voglio visualizzare le variabili fortemente correlate (sia direttamente che inversamente)
+filtro = (abs(matrice_correlazione) >= 0.7) & (abs(matrice_correlazione) != 1)
+
+# Filtra le correlazioni.
+correlazioni_strette = matrice_correlazione[filtro]
+
+# Riduco le dimensioni del dataframe (da 60 a 30)
+correlazioni_strette = correlazioni_strette.dropna(how = 'all', axis = 1).dropna(how = 'all')
+# Stampa solo le correlazioni strette
+print(correlazioni_strette)
+
+# Grazie a due funzioni di numpy,
+# posso estrarre dal mio dataframe (usata come matrice), la matrice triangolare superiore (valori che stanno sopra la diagonale principale).
+triang_sup = np.triu(np.ones_like(correlazioni_strette, dtype = bool))
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+FUNZIONE PER VEDERE CORRELAZIONE TRA DUE COLONNE CON DISPLOT
+def plot_correlation_displot(df, col1, col2):
+  
+    if col1 in df.columns and col2 in df.columns:
+        # Distribuzione della prima colonna
+        sns.displot(df, x=col1, kind='kde')
+        plt.title(f'Distribuzione di {col1}')
+        plt.xlabel(col1)
+        plt.ylabel('Densità')
+        plt.show()
+
+        # Distribuzione della seconda colonna
+        sns.displot(df, x=col2, kind='kde')
+        plt.title(f'Distribuzione di {col2}')
+        plt.xlabel(col2)
+        plt.ylabel('Densità')
+        plt.show()
+
+        # Grafico di correlazione tra le due colonne
+        sns.jointplot(data=df, x=col1, y=col2, kind='scatter')
+        plt.suptitle(f'Correlazione tra {col1} e {col2}', y=1.02)
+        plt.xlabel(col1)
+        plt.ylabel(col2)
+        plt.show()
+    else:
+        print(f"Una o entrambe le colonne '{col1}' e '{col2}' non esistono nel DataFrame.")
+
+print("Nomi delle colonne nel DataFrame dopo la rimozione degli spazi:", df.columns)
+col1 = input("Inserisci il nome della prima colonna: ")
+col2 = input("Inserisci il nome della seconda colonna: ")
+plot_correlation_displot(df, col1, col2)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (distribuzione dei dati) 
+
+def analizza_distribuzione(df):
+    # Chiedi all'utente il nome della colonna
+    colonna = input("Inserisci il nome della colonna da analizzare: ")
+
+    # Controlla se la colonna esiste nel DataFrame
+    if colonna not in df.columns:
+        print(f"La colonna '{colonna}' non esiste nel DataFrame.")
+        return
+
+    # Calcola la skewness
+    skewness = df[colonna].skew()
+    print(f"La skewness della colonna '{colonna}' è: {skewness:.2f}")
+
+    # Interpretazione della skewness
+    if skewness > 0:
+        print(f"La distribuzione della colonna '{colonna}' è positivamente skewed (asimmetrica a destra).")
+    elif skewness < 0:
+        print(f"La distribuzione della colonna '{colonna}' è negativamente skewed (asimmetrica a sinistra).")
+    else:
+        print(f"La distribuzione della colonna '{colonna}' è approssimativamente simmetrica.")
+
+    # Crea l'istogramma con curva di densità
+    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='count')
+
+    # Imposta il titolo del grafico
+    plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
+
+    # Se la colonna è 'shares', limita l'asse X a 10000
+    if colonna == ' shares':
+        plt.xlim(0, 10000)
+        plt.xlabel('Numero di condivisioni (limite a 10000)')
+
+    # Mostra il grafico
+    plt.show()
+
+# Chiama la funzione
+analizza_distribuzione(df)
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE PER CAPIRE E VISUALIZZARE LE COLONNE ALTAMENTE SBILANCIATE
 
 #impostO lo sbilanciamento al 90% per prova
@@ -137,157 +252,80 @@ for feature in features_sbilanciate:
 
 print(f"Possibili anomalie: {features_sbilanciate}")
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Vorrei vedere se le feature sono linearmente indipendenti
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#VISUALIZZAZIONE GRAFICA DELLA DISTRIBUZIONE DI OGNI COLONNA (nome con spazio)
 
-# Qua ottengo la matrice di correlazione tra le colonne del dataframe escludendo la prima colonna (essendo l'unica colonna in stringhe)
-matrice_correlazione = df.iloc[:, 1:].corr()
+# Griglia di istogrammi che vanno a raffigurare la distribuzione dei valori per ogni colonna.
 
-# Mi disinteresso delle mancanze di correlazione (valori intorno allo 0).
-# Voglio visualizzare le variabili fortemente correlate (sia direttamente che inversamente)
-filtro = (abs(matrice_correlazione) >= 0.7) & (abs(matrice_correlazione) != 1)
+def plot_column_distribution(df, column_name):
 
-# Filtra le correlazioni.
-correlazioni_strette = matrice_correlazione[filtro]
+    if column_name in df.columns:
+        df[column_name].hist(figsize=(10, 6))
+        plt.title(f'Distribuzione della colonna: {column_name}')
+        plt.xlabel(column_name)
+        plt.ylabel('Frequenza')
+        plt.show()
+    else:
+        print(f"La colonna '{column_name}' non esiste nel DataFrame.")
 
-# Riduco le dimensioni del dataframe (da 60 a 30)
-correlazioni_strette = correlazioni_strette.dropna(how = 'all', axis = 1).dropna(how = 'all')
-# Stampa solo le correlazioni strette
-print(correlazioni_strette)
+column_name = input("Inserisci il nome della colonna da visualizzare:")
+plot_column_distribution(df_brutta, column_name)
 
-# Grazie a due funzioni di numpy,
-# posso estrarre dal mio dataframe (usata come matrice), la matrice triangolare superiore (valori che stanno sopra la diagonale principale).
-triang_sup = np.triu(np.ones_like(correlazioni_strette, dtype = bool))
+# Si notano diverse colonne con un solo valore.
+# Potrebbe essere insolito per quanto riguarda le colonne delle keywords.
 
-
-print(df.iloc[:,-1].describe())
-
-value_label1 = df_brutta.iloc[:,-1]
-value_label2 = value_label1[value_label1 > 3395.380184]
-
-print(value_label2.describe())
-
-value_label2 = value_label1[value_label1 > 10000.00]
-
-print(value_label2.describe())
-
-value_label2 = value_label1[value_label1 > 20000.00]
-
-print(value_label2.describe())
-
-descrizione_ultima = value_label2.describe()
-
-print(descrizione_ultima[0] / len(df_brutta) * 100, " %")
-# ciclo for dentro la funzione per applicarlo ad ogni feature, con l'obiettivo di stampare la % degli outliers.
-
-
-prima_lung = len(value_label2)
-
-
-value_label2.hist(by=None, ax=None, grid=True, xlabelsize=None, xrot=None, ylabelsize=None, yrot=None, figsize=None, bins=10, backend=None, legend=False)
-
-print(len(value_label2))
-print(value_label2.describe())
-
-# Rappresento grafico la matrice nascondendo la matrice triangolare superiore
-plt.figure(figsize=(18, 15))
-sns.heatmap(correlazioni_strette, mask=triang_sup, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, linecolor='grey')
-plt.title('Matrice di Correlazione')
-plt.show()
-# Si nota che la metà delle features sono in stretta relazione con una (massimo due) feature.
-# Inoltre si scopre che la metà delle feature sono ordinate in base alla loro correlazione a due a due.
 # DISCLAIMER:
-# Si nota che i valori sono un pò approssimati
+# Le scale numeriche variano tra un grafico all'altro causando una possibile male interpretazione.
+# Inoltre per i grafici con una sola barra, non va a significare che hanno un valore a testa. (causa: spazio insufficiente del display)
+ 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#FUNZIONE PER VISUALIZZARE GRAFICAMENTE LA DISTRIBUZIONE DEI VALORI ALL'INTERNO DELLA COLONNA 'SHARES'(la nostra label)
 
-print(df.describe())
-# Valori degli indicatori statistici standard per ogni colonna.
-value = df.iloc[:,4].value_counts(ascending = True, sort = True, normalize = True)
+# seleziono gli articoli con massimo 10'000 shares
 
+df_filtered = df[df['shares'] <= 10000]
 
-value_1 = df.iloc[:,4]
-value_2 = value_1[value_1 > 0.608696]
-"""
-plt.figure(figsize=(8, 6))
-value_2.plot(kind='bar', color='skyblue')
-plt.title('Distribuzione dei valori nella colonna "a"')
-plt.xlabel('Valori')
-plt.ylabel('Frequenza Relativa')
-plt.show()
-"""
-outlier = value_2[value_2 > 1]
-print(outlier)
-print(len(df_brutta))
-df_brutta.drop(df_brutta[df_brutta.iloc[:,4] == 701.00].index, inplace = True)
+# Visualizzo le informazioni per la colonna degli 'shares' filtrati
 
-print("dopo: ",len(df_brutta))
+shares_stats_filtered = df_filtered['shares'].describe()
+print("Statistiche Descrittive delle Condivisioni (fino a 10000):")
+print(shares_stats_filtered)
 
+# Numero totale di articoli nel subset filtrato
 
-value_1 = df_brutta.iloc[:,4]
-value_2 = value_1[value_1 > 0.608696]
+total_articles_filtered = len(df_filtered)
+print(f"Numero totale di articoli (fino a 10000 condivisioni): {total_articles_filtered}")
 
+# Visualizzo la distribuzione degli 'shares' con una curva gaussiana per il subset filtrato
 
-outlier = value_2[value_2 >= 1]
-print(outlier)
+plt.figure(figsize=(12, 6))
+sns.histplot(df_filtered['shares'], kde=True)
 
-#df.drop(df[df['city'] == 'Chicago'].index)
+# Imposto l'unità di misura delle asse x
 
+plt.xticks(ticks=range(0, 10001, 1000),
+           labels=[f'{i // 1000} mila' for i in range(0, 10001, 1000)])
 
-plt.boxplot(value_2)
-plt.title('Distribuzione dei valori nella colonna "unique_tokens"')
-plt.xlabel('Valori')
-plt.ylabel('Frequenza.')
+plt.title(f'Distribuzione degli Share degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
+plt.xlabel('Numero di Condivisioni')
+plt.ylabel('Frequenza')
 plt.show()
 
-print(value_2.describe())
+# Calcolo l'IQR (Intervallo Interquartile) e identifico gli outliers nel subset filtrato
 
-# Valori degli indicatori della label
+Q1 = df_filtered['shares'].quantile(0.25)
+Q3 = df_filtered['shares'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
 
-print(df[df.columns[23]].describe())
-
-# Sono 39644 valori (visto che non ci sono Nan).
-
-# I valori variano da 1 a 843300.
-
-# I valori sono MOLTO SBILANCIATI (si nota dall'istogramma degli shares)
-
-# Quindi la media non è assolutamente consigliata da utilizzare come treshold per mappatura (dipendente dagli outlier)
-
-# POSSIBILE SOLUZIONE: prendiamo in considerazione la MEDIANA (il quartile 50%), per ottenere due classi BILANCIATE.
-
-# Così da optare per una CLASSIFICAZIONE BINARIA.
-
-# Se si vuole effettuare una multiclasse, è necessaria una ricerca nel dominio.
-
-# ELIMINARE LE RIGHE CON ALMENO UN OUTLIER.
-
-df_float = df_brutta.select_dtypes(include=['float'])
-
-def gestisci_outlier(col):
-    Q1 = col.quantile(0.25)
-    Q3 = col.quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    col[col < lower_bound] = lower_bound
-    col[col > upper_bound] = upper_bound
-    return col
-
-# Applica la funzione a ciascuna colonna float
-
-df_brutta[df_float.columns] = df[df_float.columns].apply(gestisci_outlier)
-
-print(df)
-
-df_brutta.hist(figsize=(25, 22))
-plt.show()
-
-df_brutta[df.columns[23]].hist(figsize=(25, 22))
-plt.show()
-
-df_brutta.info()
+# Trovo gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
+articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
+print("Numero di Articoli filtrati (fino a 10000 condivisioni):", len(articles_filtered))
+print("Articoli filtrati (fino a 10000 condivisioni):")
+print(articles_filtered[['url', 'shares']])
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 #FUNZIONE PER VEDERE NUMERICAMENTE IL NUMERO E LA % DI OUTLIERS PER OGNI COLONNA
 
 # Escludi la prima colonna non numerica
@@ -369,54 +407,6 @@ else:
     print(f"La colonna '{colonna_da_analizzare}' non esiste nel DataFrame o non è numerica.")
     
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#FUNZIONE PER VISUALIZZARE GRAFICAMENTE LA DISTRIBUZIONE DEI VALORI ALL'INTERNO DELLA COLONNA 'SHARES'
-
-# seleziono gli articoli con massimo 10'000 shares
-
-df_filtered = df[df['shares'] <= 10000]
-
-# Visualizzo le informazioni per la colonna degli 'shares' filtrati
-
-shares_stats_filtered = df_filtered['shares'].describe()
-print("Statistiche Descrittive delle Condivisioni (fino a 10000):")
-print(shares_stats_filtered)
-
-# Numero totale di articoli nel subset filtrato
-
-total_articles_filtered = len(df_filtered)
-print(f"Numero totale di articoli (fino a 10000 condivisioni): {total_articles_filtered}")
-
-# Visualizzo la distribuzione degli 'shares' con una curva gaussiana per il subset filtrato
-
-plt.figure(figsize=(12, 6))
-sns.histplot(df_filtered['shares'], kde=True)
-
-# Imposto l'unità di misura delle asse x
-
-plt.xticks(ticks=range(0, 10001, 1000),
-           labels=[f'{i // 1000} mila' for i in range(0, 10001, 1000)])
-
-plt.title(f'Distribuzione degli Share degli Articoli (Fino a 10001, Totale articoli: {total_articles_filtered})')
-plt.xlabel('Numero di Condivisioni')
-plt.ylabel('Frequenza')
-plt.show()
-
-# Calcolo l'IQR (Intervallo Interquartile) e identifico gli outliers nel subset filtrato
-
-Q1 = df_filtered['shares'].quantile(0.25)
-Q3 = df_filtered['shares'].quantile(0.75)
-IQR = Q3 - Q1
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
-
-# Trovo gli articoli virali (outliers) in base al numero di condivisioni nel subset filtrato
-articles_filtered = df_filtered[df_filtered['shares'] > upper_bound]
-print("Numero di Articoli filtrati (fino a 10000 condivisioni):", len(articles_filtered))
-print("Articoli filtrati (fino a 10000 condivisioni):")
-print(articles_filtered[['url', 'shares']])
-
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE PER DIVIDERE IL DATASET IN TRE CLASSI
 
 # definiamo le soglie per le tre classi
@@ -459,74 +449,6 @@ plt.show()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-#FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (distribuzione dei dati) 
-
-def analizza_distribuzione(df):
-    # Chiedi all'utente il nome della colonna
-    colonna = input("Inserisci il nome della colonna da analizzare: ")
-
-    # Controlla se la colonna esiste nel DataFrame
-    if colonna not in df.columns:
-        print(f"La colonna '{colonna}' non esiste nel DataFrame.")
-        return
-
-    # Calcola la skewness
-    skewness = df[colonna].skew()
-    print(f"La skewness della colonna '{colonna}' è: {skewness:.2f}")
-
-    # Interpretazione della skewness
-    if skewness > 0:
-        print(f"La distribuzione della colonna '{colonna}' è positivamente skewed (asimmetrica a destra).")
-    elif skewness < 0:
-        print(f"La distribuzione della colonna '{colonna}' è negativamente skewed (asimmetrica a sinistra).")
-    else:
-        print(f"La distribuzione della colonna '{colonna}' è approssimativamente simmetrica.")
-
-    # Crea l'istogramma con curva di densità
-    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='count')
-
-    # Imposta il titolo del grafico
-    plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
-
-    # Se la colonna è 'shares', limita l'asse X a 10000
-    if colonna == ' shares':
-        plt.xlim(0, 10000)
-        plt.xlabel('Numero di condivisioni (limite a 10000)')
-
-    # Mostra il grafico
-    plt.show()
-
-# Chiama la funzione
-analizza_distribuzione(df)
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#FUNZIONE .displot
-
-# Assicurati che i nomi delle colonne non abbiano spazi iniziali o finali
-df.columns = df.columns.str.strip()
-
-# Verifica che il nome della colonna sia corretto
-print("Nomi delle colonne nel DataFrame dopo la rimozione degli spazi:", df.columns)
-
-# Visualizzazione della distribuzione della colonna 'shares'
-sns.displot(data=df, x='shares', kind='kde')
-plt.xlim(0, 10000)
-plt.title('Distribuzione delle condivisioni')
-plt.xlabel('Numero di condivisioni')
-plt.ylabel('Densità')
-plt.show()
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-#FUNZIONE DESCRIBE PER COLONNA
-
-if ' shares' in df.columns:
-    descrizione = df[' shares'].describe()
-    print(descrizione)
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""   
-print(df[[' shares', ' kw_avg_avg']].corr())
-    
-    
 """
 Business Goal: Predirre la popolarità mediatica di 
 vari articoli di Mashable,
