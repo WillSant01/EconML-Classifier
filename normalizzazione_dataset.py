@@ -1,14 +1,5 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-from scipy import stats
-from sklearn.preprocessing import RobustScaler
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 from scipy.stats.mstats import winsorize
-from sklearn.decomposition import PCA
 
 
 """
@@ -190,6 +181,6 @@ df_cart = df_cart.dropna()
 for column in df_rf.columns:
     df_rf[column] = winsorize(df_rf[column], limits=[0.05, 0.05])
 
-df_cart.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_CART', index=False)
+df_cart.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_CART.csv', index=False)
 
-df_rf.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_RF', index=False)
+df_rf.to_csv(r'C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_RF.csv', index=False)
