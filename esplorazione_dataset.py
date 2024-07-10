@@ -32,7 +32,7 @@ script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 file_path = os.path.join(script_dir, "esplorazione_dataset.py")
 print(os.getcwd())
 
-df = pd.read_csv(r"C:\Users\AdamPezzutti\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
+df = pd.read_csv(r"C:\Users\WilliamSanteramo\repo_github\EconML-Classifier\OnlineNewsPopularity.csv")
 df_brutta = df.copy()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -174,7 +174,7 @@ def analizza_distribuzione(df):
     plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
 
     # Se la colonna è 'shares', limita l'asse X a 10000
-    if colonna == 'shares':
+    if colonna == ' shares':
         plt.xlim(0, 10000)
         plt.xlabel('Numero di condivisioni (limite a 10000)')
 

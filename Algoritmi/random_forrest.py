@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
 # Carichiamo il dataset
-data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_RF.csv")
+data = pd.read_csv(r"C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_RF.csv")
 
 plt.figure(figsize=(12, 6))
 sns.histplot(data=data, x='shares', kde=True)

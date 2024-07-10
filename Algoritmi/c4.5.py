@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from imblearn.over_sampling import SMOTE
 
 # Caricamento del dataset
-data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_CART.csv")
+data = pd.read_csv(r"C:\Users\WilliamSanteramo\Repo_github\EconML-Classifier\Algoritmi\online_news_CART.csv")
 
 # Controlliamo la densità con un istogramma
 plt.figure(figsize=(12, 6))
