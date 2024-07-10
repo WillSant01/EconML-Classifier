@@ -45,6 +45,19 @@ print(df.head()) # Campione prime 5 righe
 # Si nota la presenza di numerose colonne con valori di 0 (il motivo principale è che vanno a rappresentare il False)
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+#CONTROLLA SE CI SONO DUPLICATI
+
+#funzione di pandas per vedere se ci sono duplicati
+
+duplicates = df[df.duplicated(keep=False)]
+
+if not duplicates.empty:
+    print(f"Sono state trovate {duplicates.shape[0]} righe duplicate:")
+    print(duplicates)
+else:
+    print("Non ci sono righe duplicate nel dataset.")
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #VISUALIZZAZIONE SOTTOFORMA DI TABELLA DELLE INFORMAZIONI PRINCIPALE X COLONNA
 
 # Estrai le informazioni rilevanti dal DataFrame
@@ -95,10 +108,11 @@ for col in df.columns:
 df.columns = df.columns.str.strip()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
 #FUNZIONE DESCRIBE PER COLONNA
 
 def describe_column(df, column_name):
+    
+    # Controlla se il nome della colonna esiste nel DataFrame
   
     if column_name in df.columns:
         descrizione = df[column_name].describe()
@@ -116,73 +130,20 @@ if descrizione is not None:
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE PER VEDERE LA CORRELAZIONE TRA DUE COLONNE
 
-def calculate_correlation(df, col1, col2):
+def calcolo_correlazione(df, col1, col2):
+    
+   #fa la matrice di correlazione, e con iloc seleziona la colonna
    
-    correlation = df[[col1, col2]].corr().iloc[0, 1]
-    return correlation
+    correlazione = df[[col1, col2]].corr().iloc[0, 1]
+    return correlazione
 
 col1 = input("Inserisci il nome della prima colonna: ")
 col2 = input("Inserisci il nome della seconda colonna: ")
-corr_value = calculate_correlation(df, col1, col2)
+corr_value = calcolo_correlazione (df, col1, col2)
 
 print(f"La correlazione tra {col1} e {col2} è: {corr_value}")
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-# Vorrei vedere se le feature sono linearmente indipendenti
-
-# Qua ottengo la matrice di correlazione tra le colonne del dataframe escludendo la prima colonna (essendo l'unica colonna in stringhe)
-matrice_correlazione = df.iloc[:, 1:].corr()
-
-# Mi disinteresso delle mancanze di correlazione (valori intorno allo 0).
-# Voglio visualizzare le variabili fortemente correlate (sia direttamente che inversamente)
-filtro = (abs(matrice_correlazione) >= 0.7) & (abs(matrice_correlazione) != 1)
-
-# Filtra le correlazioni.
-correlazioni_strette = matrice_correlazione[filtro]
-
-# Riduco le dimensioni del dataframe (da 60 a 30)
-correlazioni_strette = correlazioni_strette.dropna(how = 'all', axis = 1).dropna(how = 'all')
-# Stampa solo le correlazioni strette
-print(correlazioni_strette)
-
-# Grazie a due funzioni di numpy,
-# posso estrarre dal mio dataframe (usata come matrice), la matrice triangolare superiore (valori che stanno sopra la diagonale principale).
-triang_sup = np.triu(np.ones_like(correlazioni_strette, dtype = bool))
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-FUNZIONE PER VEDERE CORRELAZIONE TRA DUE COLONNE CON DISPLOT
-def plot_correlation_displot(df, col1, col2):
-  
-    if col1 in df.columns and col2 in df.columns:
-        # Distribuzione della prima colonna
-        sns.displot(df, x=col1, kind='kde')
-        plt.title(f'Distribuzione di {col1}')
-        plt.xlabel(col1)
-        plt.ylabel('Densità')
-        plt.show()
-
-        # Distribuzione della seconda colonna
-        sns.displot(df, x=col2, kind='kde')
-        plt.title(f'Distribuzione di {col2}')
-        plt.xlabel(col2)
-        plt.ylabel('Densità')
-        plt.show()
-
-        # Grafico di correlazione tra le due colonne
-        sns.jointplot(data=df, x=col1, y=col2, kind='scatter')
-        plt.suptitle(f'Correlazione tra {col1} e {col2}', y=1.02)
-        plt.xlabel(col1)
-        plt.ylabel(col2)
-        plt.show()
-    else:
-        print(f"Una o entrambe le colonne '{col1}' e '{col2}' non esistono nel DataFrame.")
-
-print("Nomi delle colonne nel DataFrame dopo la rimozione degli spazi:", df.columns)
-col1 = input("Inserisci il nome della prima colonna: ")
-col2 = input("Inserisci il nome della seconda colonna: ")
-plot_correlation_displot(df, col1, col2)
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 #FUNZIONE PER CAPIRE LA SKEWNESS E VISUALIZZARLA GRAFICAMENTE (distribuzione dei dati) 
 
 def analizza_distribuzione(df):
@@ -207,13 +168,13 @@ def analizza_distribuzione(df):
         print(f"La distribuzione della colonna '{colonna}' è approssimativamente simmetrica.")
 
     # Crea l'istogramma con curva di densità
-    sns.histplot(data=df, x=colonna, kde=True, color='darkblue', stat='count')
+    sns.histplot(data=df, x=colonna, color='darkblue', stat='count')
 
     # Imposta il titolo del grafico
     plt.title(f"Distribuzione di {colonna} (Skewness: {skewness:.2f})")
 
     # Se la colonna è 'shares', limita l'asse X a 10000
-    if colonna == ' shares':
+    if colonna == 'shares':
         plt.xlim(0, 10000)
         plt.xlabel('Numero di condivisioni (limite a 10000)')
 
