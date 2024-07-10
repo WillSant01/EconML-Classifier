@@ -30,8 +30,9 @@ def classificazione_shares(shares):
     else:
         return 4
 
-
+# Crea una nuova colonna 
 data['classe'] = data['shares'].apply(classificazione_shares)
+# axis=1 indica che l'operazione deve essere applicata orizzontalmente
 data.drop(['shares'], axis=1)
 
 print(data['classe'].value_counts(normalize=True) * 100)
@@ -40,6 +41,7 @@ print(data['classe'].value_counts(normalize=True) * 100)
 X = data.drop('classe', axis=1)  # tutte le colonne eccetto 'successo'
 y = data['classe']  # la colonna 'successo'
 
+# Ora che sappiamo il numero di componenti che ci servono utilizziamo di nuovo la PCA
 pca = PCA()
 X_pca = pca.fit_transform(X)
 
@@ -58,9 +60,11 @@ plt.title('Scree Plot')
 plt.grid(True)
 plt.show()
 
+# Ora che sappiamo il numero di componenti che ci servono utilizziamo di nuovo la PCA
 pca = PCA(n_components=6)
 X_pca = pca.fit_transform(X)
 
+# Utilizzamo SMOTE per il problema del bilanciamento delle classi
 """ smote = SMOTE()
 X_sampled, y_sampled = smote.fit_resample(X_pca, y) """ 
 
@@ -91,6 +95,8 @@ param_grid = {
 }
 
 # Inizializzazione del GridSearchCV
+
+# esegue una ricerca esaustiva dei parametri 
 grid_search = GridSearchCV(estimator=clf, param_grid=param_grid, cv=5, scoring='accuracy', n_jobs=-1)
 grid_search.fit(X_train, y_train)
 
@@ -115,7 +121,7 @@ print(f'Best parameters: {grid_search.best_params_}')
 print(f'Optimized Accuracy: {accuracy_score(y_test, y_pred)}')
 print(classification_report(y_test, y_pred))
 
-# OOB (Out-of-Bag) error rate
+# OOB (Out-of-Bag) error rate -- errori e il codice che hai fornito riguardano l'ottimizzazione dei parametri 
 best_clf.set_params(oob_score=True)
 best_clf.fit(X_train, y_train)
 

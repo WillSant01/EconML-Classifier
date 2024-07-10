@@ -3,17 +3,15 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import GridSearchCV
 from sklearn.decomposition import PCA
 from imblearn.over_sampling import SMOTE
-from sklearn.metrics import roc_curve, auc
-from sklearn.preprocessing import label_binarize
 
 # Caricamento del dataset
 data = pd.read_csv(r"C:\Users\FrancescoFenzi\repo_git\EconML-Classifier\Algoritmi\online_news_CART.csv")
 
+# Controlliamo la densità con un istogramma
 plt.figure(figsize=(12, 6))
 sns.histplot(data=data, x='shares', kde=True)
 plt.show()
@@ -29,7 +27,6 @@ def classificazione_shares(shares):
     else:
         return 4
 
-
 data['classe'] = data['shares'].apply(classificazione_shares)
 data.drop(['shares'], axis=1)
 
@@ -41,6 +38,7 @@ print(data['classe'].value_counts(normalize=True) * 100)
 X = data.drop('classe', axis=1) # tutte le colonne eccetto 'successo'
 y = data['classe']  # la colonna 'successo'
 
+# Usiamo la PCA per ridurre la dimendionalità
 pca = PCA()
 X_pca = pca.fit_transform(X)
 
@@ -59,10 +57,11 @@ plt.title('Scree Plot')
 plt.grid(True)
 plt.show()
 
-# ora che sappiamo il numero di componenti che ci servono utilizziamo di nuovo la PCA
+# Ora che sappiamo il numero di componenti che ci servono utilizziamo di nuovo la PCA
 pca = PCA(n_components=8)
 X_pca = pca.fit_transform(X)
 
+# Utilizzamo SMOTE per il problema del bilanciamento delle classi
 smote = SMOTE()
 X_sampled, y_sampled = smote.fit_resample(X_pca, y) 
 
