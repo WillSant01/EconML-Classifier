@@ -26,10 +26,10 @@ DETTAGLI DEL DATASET:
 | Distribuzione delle classi: |
 | | Valore della classe (condivisioni) | Soglia multiclasse |
 | | --- | --- |
-| | 0 - 900) | Non popolare |
-| | [900 - 1500) | Poco popolare |
-| | [1500 - 3000) | Popolare |
-| | 3000 + | Molto popolare |
+| Non popolare | 0 - 900) |
+| Poco popolare | [900 - 1500) |
+| Popolare | [1500 - 3000) |
+| Molto popolare | 3000 + |
 
 
 
